@@ -3,4 +3,4 @@
 compile_commands.json
 *.o
 *.a
-models/*
+models/*.bin

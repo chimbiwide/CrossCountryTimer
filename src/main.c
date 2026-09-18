@@ -12,6 +12,13 @@ int main(void)
     InitWindow(scWidth, scHeight, "Cross Country Timer");
     SetTargetFPS(60);
 
+    Font font = LoadFontEx("data/Google-Sans-Mono-Regular.ttf", 125, NULL, 0);
+    SetTextureFilter(font.texture, TEXTURE_FILTER_BILINEAR);
+    GuiSetFont(font);
+
+    GuiSetStyle(LABEL, TEXT_ALIGNMENT, TEXT_ALIGN_CENTER);
+    GuiSetStyle(LABEL, TEXT_COLOR_NORMAL, ColorToInt(BLACK));
+
     // timer related stuff
     bool timerStarted = false;
     bool stopped = false;
@@ -23,8 +30,6 @@ int main(void)
         ClearBackground(RAYWHITE);
 
         // the timer
-        GuiSetStyle(LABEL, TEXT_ALIGNMENT, TEXT_ALIGN_CENTER);
-        GuiSetStyle(LABEL, TEXT_COLOR_NORMAL, ColorToInt(BLACK));
         GuiSetStyle(DEFAULT, TEXT_SIZE, 125);
         GuiLabel((Rectangle){ 0, 50, (float)GetScreenWidth(), 125 }, 
                  TextFormat("%02d:%02d:%02d.%d", 
@@ -64,6 +69,7 @@ int main(void)
         EndDrawing();
     }
 
+    UnloadFont(font);
     CloseWindow();
     return 0;
 }

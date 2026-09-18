@@ -22,7 +22,7 @@ void pause_timer(Timer *timer, double current_time);
 void resume_timer(Timer *timer, double current_time);
 void end_timer(Timer *timer);
 void read_time(Timer *timer, Time *time, double current_time);
-void write_time(const Time *time, char *buffer, int buff_size);
+void write_time(const Time *time, char *buffer, int buff_size, int rank);
 void reset_time(Time *time);
 
 #endif

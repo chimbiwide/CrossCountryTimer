@@ -27,7 +27,7 @@ int main(void)
     Time time = {0,0,0,0,0};
 
     // Lists
-    static char lap_text[100][16];
+    static char lap_text[100][128];
     static char *laps[100];
     static int lap_count;
     static int scroll;
@@ -66,7 +66,7 @@ int main(void)
         // lap button
         if (GuiButton((Rectangle){510, 180, 120, 50}, "Lap") && timerStarted) {
             // write the time to the buffer
-            write_time(&time, lap_text[lap_count], 16);
+            write_time(&time, lap_text[lap_count], 128, lap_count);
             // copy the pointer of lap_text to laps
             laps[lap_count] = lap_text[lap_count];
             lap_count++;

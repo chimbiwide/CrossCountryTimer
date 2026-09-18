@@ -33,9 +33,10 @@ void read_time(Timer *timer, Time *time, double current_time) {
     time->h = total_tenths / 36000;
 }
 
-void write_time(const Time *time, char *buffer, int buff_size) {
-    snprintf(buffer, (size_t)buff_size, "%02d:%02d:%02d.%03d",
-             time->h, time->min, time->s, time->ms);
+// keep this here for now
+void write_time(const Time *time, char *buffer, int buff_size, int rank) {
+    snprintf(buffer, (size_t)buff_size, "Rank: %d | Time: %02d:%02d:%02d.%03d",
+             rank, time->h, time->min, time->s, time->ms);
 }
 
 void reset_time(Time *time) {

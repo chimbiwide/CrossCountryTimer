@@ -12,6 +12,7 @@ int main(void)
     InitWindow(scWidth, scHeight, "Cross Country Timer");
     SetTargetFPS(60);
 
+    // fonts
     Font font = LoadFontEx("data/Google-Sans-Mono-Regular.ttf", 125, NULL, 0);
     SetTextureFilter(font.texture, TEXTURE_FILTER_BILINEAR);
     GuiSetFont(font);
@@ -24,6 +25,19 @@ int main(void)
     bool stopped = false;
     Timer timer = {false, 0.0};
     Time time = {0,0,0,0,0};
+
+    // Lists
+    static char lap_text[100][16];
+    static char *laps[100];
+    static int lap_count;
+    static int scroll;
+    static int active;
+    static int focused;
+
+    float listW = 500;
+    float listH = 350;
+    float listX = (((float)GetScreenWidth() - listW) / 2.0f);
+    float listY = 350;
 
     while (!WindowShouldClose()) {
         BeginDrawing();
@@ -48,7 +62,11 @@ int main(void)
         }
         // lap button
         if (GuiButton((Rectangle){510, 180, 120, 50}, "Lap") && timerStarted) {
-            // prints the curent time to the textbox
+            // write the time to the buffer
+            write_time(&time, lap_text[lap_count], 16);
+            // copy the pointer of lap_text to laps
+            laps[lap_count] = lap_text[lap_count];
+            lap_count++;
         }
 
         // stop button
@@ -63,6 +81,11 @@ int main(void)
             end_timer(&timer);
             reset_time(&time);
         }
+
+        // the grid list
+        if (lap_count > 11) scroll = lap_count - 11;
+        GuiListViewEx((Rectangle){listX, listY, listW, listH},
+                      laps, lap_count, &scroll, &active, &focused);
 
         // read the time after every frame
         if (timerStarted) read_time(&timer, &time, GetTime());

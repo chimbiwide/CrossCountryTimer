@@ -1,4 +1,5 @@
 #include "raylib.h"
+#include <csv.h>
 #include <time.h>
 
 #define RAYGUI_IMPLEMENTATION
@@ -39,6 +40,10 @@ int main(void)
     float listX = (((float)GetScreenWidth() - listW) / 2.0f);
     float listY = 350;
 
+    FILE *file;
+
+    init_csv(file);
+
     while (!WindowShouldClose()) {
         BeginDrawing();
         ClearBackground(RAYWHITE);
@@ -70,6 +75,7 @@ int main(void)
             // copy the pointer of lap_text to laps
             laps[lap_count] = lap_text[lap_count];
             lap_count++;
+            write_csv(file, &time, lap_count);
         }
 
         // stop button

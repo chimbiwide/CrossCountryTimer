@@ -33,6 +33,7 @@ endif()
 add_executable(CrossCountryTimer 
     src/main.c
     src/time.c
+    src/csv.c
 )
 target_include_directories(CrossCountryTimer PRIVATE
     ${CMAKE_SOURCE_DIR}/include

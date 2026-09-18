@@ -1,5 +1,9 @@
 # CrossCountryTimer
 
+The cross country timer app built with rayGui
+
+---
+
 ## Build
 
 Needs CMake 3.22+, a C11 compiler, and (by default) a C++ compiler for whisper.cpp.

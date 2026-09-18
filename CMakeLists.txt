@@ -30,7 +30,10 @@ if(UNIX)
     target_link_libraries(pdfgen PUBLIC m)
 endif()
 
-add_executable(CrossCountryTimer src/main.c)
+add_executable(CrossCountryTimer 
+    src/main.c
+    src/time.c
+)
 target_include_directories(CrossCountryTimer PRIVATE
     ${CMAKE_SOURCE_DIR}/include
 )

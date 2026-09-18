@@ -93,7 +93,7 @@ int main(void)
         }
 
         // the grid list
-        if (lap_count > 11) scroll = lap_count - 11;
+        if ((lap_count > 11) && timerStarted) scroll = lap_count - 11;
         GuiListViewEx((Rectangle){listX, listY, listW, listH},
                       laps, lap_count, &scroll, &active, &focused);
 

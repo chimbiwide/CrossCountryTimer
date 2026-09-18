@@ -21,10 +21,13 @@ void write_csv(FILE *file, const Time *time, int rank) {
     }
 
     fprintf(file, "%d,%s,%s,%s\n", 
-            rank, 
+            rank+1, 
             "",
             TextFormat("%02d:%02d:%02d.%03d", time->h, time->min, time->s, time->ms),
             "");
     fclose(file);
     return;
+}
+
+int read_csv(FILE *file, Row buffer[100]) {
 }

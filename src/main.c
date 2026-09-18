@@ -58,7 +58,10 @@ int main(void)
         if (GuiButton((Rectangle){370, 180, 120, 50}, "Start") && !timerStarted) {
             timerStarted = true;
             if (!stopped) start_timer(&timer, GetTime());
-            else stopped = false;
+            else {
+                stopped = false;
+                resume_timer(&timer, GetTime());
+            }
         }
         // lap button
         if (GuiButton((Rectangle){510, 180, 120, 50}, "Lap") && timerStarted) {
@@ -72,6 +75,7 @@ int main(void)
         // stop button
         if (GuiButton((Rectangle){650, 180, 120, 50}, "Stop") && timerStarted) {
             stopped = true;
+            pause_timer(&timer, GetTime());
             timerStarted = false;
         }
 

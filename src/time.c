@@ -7,6 +7,14 @@ void start_timer(Timer *timer, int start_time) {
     timer->startTime = start_time;
 }
 
+void pause_timer(Timer *timer, double current_time) {
+    timer->pausedTime = current_time;
+}
+
+void resume_timer(Timer *timer, double current_time) {
+    timer->startTime = timer->startTime + (current_time - timer->pausedTime);
+}
+
 void end_timer(Timer *timer) {
     timer->running = false;
 }

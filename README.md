@@ -54,3 +54,22 @@ whisper.cpp is linked in by default (`CCT_WITH_WHISPER=ON`) and is the slow part
 cmake -S . -B build -DCCT_WITH_WHISPER=OFF
 cmake --build build
 ```
+
+---
+
+### TO-DO
+
+1. Temperature
+2. Wind
+3. Precipitation
+4. clouds
+5. records
+
+---
+
+### Division
+
+- Freshman
+- Varsity
+- JV 
+- Middleman

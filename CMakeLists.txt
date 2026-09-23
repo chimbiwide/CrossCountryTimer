@@ -1,4 +1,17 @@
 cmake_minimum_required(VERSION 3.22)
+
+# CMake 4 rejects third-party projects that still declare a policy version
+# older than 3.5 (whisper.cpp / ggml). Floor those at 3.5.
+set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
+
+if(CMAKE_HOST_WIN32 AND NOT CMAKE_GENERATOR MATCHES "MinGW Makefiles|Ninja|Visual Studio")
+    message(FATAL_ERROR
+        "On Windows, configure with the MinGW preset (gcc and mingw32-make on PATH):\n"
+        "  cmake --preset windows\n"
+        "  cmake --build --preset windows -j\n"
+        "The generator '${CMAKE_GENERATOR}' needs the Visual Studio C compiler.")
+endif()
+
 project(CrossCountryTimer LANGUAGES C)
 
 set(CMAKE_C_STANDARD 11)
@@ -15,8 +28,11 @@ set(PLATFORM Desktop CACHE STRING "raylib platform")
 set(OPENGL_VERSION OFF CACHE STRING "raylib OpenGL version")
 set(USE_EXTERNAL_GLFW OFF CACHE STRING "Use system GLFW")
 set(USE_AUDIO ON CACHE BOOL "raylib audio")
-set(GLFW_BUILD_WAYLAND OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_X11 ON CACHE BOOL "" FORCE)
+# X11/Wayland exist only on Linux. On Windows, GLFW's own options select Win32.
+if(UNIX AND NOT APPLE)
+    set(GLFW_BUILD_WAYLAND OFF CACHE BOOL "" FORCE)
+    set(GLFW_BUILD_X11 ON CACHE BOOL "" FORCE)
+endif()
 
 # raylib's root CMakeLists calls project() with no LANGUAGES, which
 # enables C++. Use src/ so a C compiler is enough.

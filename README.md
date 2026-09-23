@@ -41,7 +41,35 @@ The binary lands at `build/CrossCountryTimer`:
 ./build/CrossCountryTimer
 ```
 
-Default build type is Debug. For a Release build:
+Run it from the repo root so it can find `data/Google-Sans-Mono-Regular.ttf`.
+
+### Windows (MinGW)
+
+Needs CMake 3.22+, MinGW gcc/g++, and `mingw32-make` on `PATH`. There is no Visual Studio project. A plain `cmake -S . -B build` picks NMake and stops, because that generator wants the Visual Studio compiler.
+
+From the repo root, in PowerShell:
+
+```powershell
+cmake --preset windows
+cmake --build --preset windows -j
+```
+
+The preset is a Release build and writes `build\CrossCountryTimer.exe`. Start it from the repo root:
+
+```powershell
+.\build\CrossCountryTimer.exe
+```
+
+MinGW's runtime DLLs (`libgcc_s_seh-1.dll`, `libstdc++-6.dll`, `libwinpthread-1.dll`) have to be on `PATH`. It will work if launched from a terminal where `gcc` is available.
+
+
+Compile without whisper:
+```powershell
+cmake --preset windows -DCCT_WITH_WHISPER=OFF
+cmake --build --preset windows -j
+```
+
+Default build type on Linux is Debug. For a Release build:
 
 ```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release

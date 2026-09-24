@@ -58,6 +58,10 @@ add_executable(CrossCountryTimer
     src/csv.c
     src/font.c
 )
+# GUI subsystem: double-clicking the exe opens the app window only.
+if(WIN32)
+    set_target_properties(CrossCountryTimer PROPERTIES WIN32_EXECUTABLE TRUE)
+endif()
 target_include_directories(CrossCountryTimer PRIVATE
     ${CMAKE_SOURCE_DIR}/include
 )

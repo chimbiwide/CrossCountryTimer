@@ -111,6 +111,11 @@ int main(void)
             stopped = false;
             end_timer(&timer);
             reset_time(&time);
+
+            lap_count = 0;
+            scroll = 0;
+            active = -1;
+            focused = -1;
         }
 
         // the grid list

@@ -1,5 +1,7 @@
 # CrossCountryTimer
 
+![icon](data/crosscountrytimer.png)
+
 The cross country timer app built with rayGui
 
 ---

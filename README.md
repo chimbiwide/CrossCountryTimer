@@ -6,7 +6,7 @@ The cross country timer app built with rayGui
 
 ## Build
 
-Needs CMake 3.22+, a C11 compiler, and (by default) a C++ compiler for whisper.cpp.
+Requires CMake 3.22+, C23 compiler(gcc 16), and (by default) a C++ compiler for whisper.cpp.
 
 `third_party/raylib` and `third_party/whisper.cpp` are git submodules. After a clone:
 

@@ -36,16 +36,17 @@ int main(void)
     static int active;
     static int focused;
 
-    float listW = 500;
-    float listH = 350;
+    float listW = GetScreenWidth() / 2.0f;
+    float listH = GetScreenHeight() / 2.0f;
     float listX = (((float)GetScreenWidth() - listW) / 2.0f);
-    float listY = 350;
+    float listY = 360;
 
     FILE *file;
 
     init_csv(file);
 
     while (!WindowShouldClose()) {
+        if (IsKeyPressed(KEY_F11)) ToggleBorderlessWindowed();
         BeginDrawing();
         ClearBackground(RAYWHITE);
 
@@ -77,6 +78,13 @@ int main(void)
             laps[lap_count] = lap_text[lap_count];
             lap_count++;
             write_csv(file, &time, lap_count);
+
+            // scroll to bottom once per update
+            int row = GuiGetStyle(LISTVIEW, LIST_ITEMS_HEIGHT) + GuiGetStyle(LISTVIEW, LIST_ITEMS_SPACING);
+            int visible = (int)listH / row;
+            if ((visible) < 1) visible = 1;
+            if (lap_count > visible) scroll = lap_count - visible;
+            else scroll = 0;
         }
 
         // stop button
@@ -94,7 +102,6 @@ int main(void)
         }
 
         // the grid list
-        if ((lap_count > 11) && timerStarted) scroll = lap_count - 11;
         GuiListViewEx((Rectangle){listX, listY, listW, listH},
                       laps, lap_count, &scroll, &active, &focused);
 

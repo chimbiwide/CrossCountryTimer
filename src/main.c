@@ -36,17 +36,29 @@ int main(void)
     static int active;
     static int focused;
 
-    float listW = GetScreenWidth() / 2.0f;
-    float listH = GetScreenHeight() / 2.0f;
-    float listX = (((float)GetScreenWidth() - listW) / 2.0f);
-    float listY = 360;
-
     FILE *file;
-
     init_csv(file);
 
     while (!WindowShouldClose()) {
         if (IsKeyPressed(KEY_F11)) ToggleBorderlessWindowed();
+        //list coordinates
+        float listW = GetScreenWidth() / 2.0f;
+        float listH = GetScreenHeight() / 2.0f;
+        float listX = (((float)GetScreenWidth() - listW) / 2.0f);
+        float listY = GetScreenHeight() / 2.0f;
+
+        int butW = 120;
+        int butH = 50;
+        float gap = 20;
+        float rowW = 4 * butW + 3 * gap;
+        float x = ((float)GetScreenWidth() - rowW) / 2.0f;
+        int butY = 180;
+
+        Rectangle startB = {x, butY, butW, butH};
+        Rectangle lapB = {x+(butW + gap), butY, butW, butH};
+        Rectangle stopB = {x+2*(butW + gap), butY, butW, butH};
+        Rectangle resetB = {x+3*(butW + gap), butY, butW, butH};
+
         BeginDrawing();
         ClearBackground(RAYWHITE);
 
@@ -62,7 +74,7 @@ int main(void)
         GuiSetStyle(DEFAULT, TEXT_SIZE, 30);
 
         // the start button
-        if (GuiButton((Rectangle){370, 180, 120, 50}, "Start") && !timerStarted) {
+        if (GuiButton(startB, "Start") && !timerStarted) {
             timerStarted = true;
             if (!stopped) start_timer(&timer, GetTime());
             else {
@@ -71,7 +83,7 @@ int main(void)
             }
         }
         // lap button
-        if (GuiButton((Rectangle){510, 180, 120, 50}, "Lap") && timerStarted) {
+        if (GuiButton(lapB, "Lap") && timerStarted) {
             // write the time to the buffer
             write_time(&time, lap_text[lap_count], 128, lap_count);
             // copy the pointer of lap_text to laps
@@ -88,14 +100,14 @@ int main(void)
         }
 
         // stop button
-        if (GuiButton((Rectangle){650, 180, 120, 50}, "Stop") && timerStarted) {
+        if (GuiButton(stopB, "Stop") && timerStarted) {
             stopped = true;
             pause_timer(&timer, GetTime());
             timerStarted = false;
         }
 
         // reset button
-        if (GuiButton((Rectangle){790, 180, 120, 50}, "Reset") && !timerStarted) {
+        if (GuiButton(resetB, "Reset") && !timerStarted) {
             stopped = false;
             end_timer(&timer);
             reset_time(&time);

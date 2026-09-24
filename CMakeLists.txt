@@ -59,8 +59,10 @@ add_executable(CrossCountryTimer
     src/font.c
 )
 # GUI subsystem: double-clicking the exe opens the app window only.
+# The .rc is the Explorer icon. windres finds the .ico beside the script.
 if(WIN32)
     set_target_properties(CrossCountryTimer PROPERTIES WIN32_EXECUTABLE TRUE)
+    target_sources(CrossCountryTimer PRIVATE data/app.rc)
 endif()
 target_include_directories(CrossCountryTimer PRIVATE
     ${CMAKE_SOURCE_DIR}/include

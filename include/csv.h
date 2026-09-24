@@ -7,12 +7,18 @@
 typedef struct {
     int rank;
     int bib;
-    char *time[14];
-    char *school[20];
+    char time[20];
+    char school[32];
 } Row;
+
+typedef struct {
+    int bib;
+    char name[50];
+    char school[20];
+} Student;
 
 void init_csv(FILE *file);
 void write_csv(FILE *file, const Time *time, int rank);
-int read_csv(FILE *file, Row buffer[100]);
+void read_lookup(FILE *lookup, Student index[]);
 
 #endif

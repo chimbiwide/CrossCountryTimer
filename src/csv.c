@@ -29,5 +29,16 @@ void write_csv(FILE *file, const Time *time, int rank) {
     return;
 }
 
-int read_csv(FILE *file, Row buffer[100]) {
+void read_lookup(FILE *lookup, Student index[]) {
+    int lines = 0;
+    int c;
+    while ((c = fgetc(lookup)) != EOF) {
+        if (c == '\n') lines++;
+    }
+    int runners = lines - 1;
+    if (runners < 0) runners = 0;
+
+    rewind(lookup);
+
+    // back to the start, read the file
 }

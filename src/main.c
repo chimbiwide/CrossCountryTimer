@@ -1,6 +1,7 @@
 #include "raylib.h"
 #include <csv.h>
 #include <time.h>
+#include <font.h>
 
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"
@@ -14,7 +15,7 @@ int main(void)
     SetTargetFPS(60);
 
     // fonts
-    Font font = LoadFontEx("data/Google-Sans-Mono-Regular.ttf", 125, NULL, 0);
+    Font font = LoadFontFromMemory(".ttf", google_sans, google_sans_size, 125, NULL, 0);
     SetTextureFilter(font.texture, TEXTURE_FILTER_BILINEAR);
     GuiSetFont(font);
 

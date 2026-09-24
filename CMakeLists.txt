@@ -12,6 +12,12 @@ if(CMAKE_HOST_WIN32 AND NOT CMAKE_GENERATOR MATCHES "MinGW Makefiles|Ninja|Visua
         "The generator '${CMAKE_GENERATOR}' needs the Visual Studio C compiler.")
 endif()
 
+# #embed needs GCC 16. Pin it before project() so the cache does not pick up
+if(UNIX AND NOT APPLE)
+    set(CMAKE_C_COMPILER gcc-16 CACHE FILEPATH "C compiler" FORCE)
+    set(CMAKE_CXX_COMPILER g++-16 CACHE FILEPATH "C++ compiler" FORCE)
+endif()
+
 project(CrossCountryTimer LANGUAGES C)
 
 set(CMAKE_C_STANDARD 23)
@@ -50,6 +56,7 @@ add_executable(CrossCountryTimer
     src/main.c
     src/time.c
     src/csv.c
+    src/font.c
 )
 target_include_directories(CrossCountryTimer PRIVATE
     ${CMAKE_SOURCE_DIR}/include

@@ -39,6 +39,14 @@ int main(void)
     FILE *file;
     init_csv(file);
 
+    Student roster[1024];
+    FILE *lookup = fopen("data/lookup.csv", "r");
+    if (lookup == NULL) printf("Error opening file\n");
+    else {
+        int runners = read_lookup(lookup, roster, 1024);
+        fclose(lookup);
+    }
+
     while (!WindowShouldClose()) {
         if (IsKeyPressed(KEY_F11)) ToggleBorderlessWindowed();
         //list coordinates

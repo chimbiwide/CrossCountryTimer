@@ -19,6 +19,6 @@ typedef struct {
 
 void init_csv(FILE *file);
 void write_csv(FILE *file, const Time *time, int rank);
-void read_lookup(FILE *lookup, Student index[]);
+int read_lookup(FILE *lookup, Student index[], int capacity);
 
 #endif

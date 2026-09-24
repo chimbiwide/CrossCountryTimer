@@ -1,4 +1,4 @@
-#include "../include/csv.h"
+#include <csv.h>
 #include <raylib.h>
 
 void init_csv(FILE *file) {

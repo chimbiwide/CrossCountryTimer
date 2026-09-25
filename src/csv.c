@@ -32,7 +32,7 @@ void write_csv(FILE *file, const Time *time, int rank) {
 
 static int split_csv(char *line, char *fields[], int max_fields) {
     size_t len = strlen(line);
-    while (len > 0 && (line[len-1] == '\n') || line[len-1] == '\r') {
+    while (len > 0 && (line[len - 1] == '\n' || line[len - 1] == '\r')) {
         line[--len] = '\0';
     }
 

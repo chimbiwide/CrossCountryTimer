@@ -2,9 +2,12 @@
 #include <csv.h>
 #include <time.h>
 #include <font.h>
+#include <data.h>
 
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"
+
+#define CAPACITY 1024
 
 int main(void)
 {
@@ -21,6 +24,8 @@ int main(void)
 
     GuiSetStyle(LABEL, TEXT_ALIGNMENT, TEXT_ALIGN_CENTER);
     GuiSetStyle(LABEL, TEXT_COLOR_NORMAL, ColorToInt(BLACK));
+    GuiSetStyle(LISTVIEW, TEXT_ALIGNMENT, TEXT_ALIGN_LEFT);
+    GuiSetStyle(LISTVIEW, LIST_ITEMS_HEIGHT, 40);
 
     // timer related stuff
     bool timerStarted = false;
@@ -29,23 +34,32 @@ int main(void)
     Time time = {0,0,0,0,0};
 
     // Lists
-    static char lap_text[100][128];
-    static char *laps[100];
+    static char lap_text[200][256];
+    static char *laps[200];
+    static Time lap_times[200];
     static int lap_count;
     static int scroll;
     static int active;
     static int focused;
 
+    // the write to file
     FILE *file;
     init_csv(file);
 
-    Student roster[1024];
+    // the student index
+    Student roster[CAPACITY] = {0};
+    int runners = 0;
     FILE *lookup = fopen("data/lookup.csv", "r");
     if (lookup == NULL) printf("Error opening file\n");
     else {
-        int runners = read_lookup(lookup, roster, 1024);
+        runners = read_lookup(lookup, roster, CAPACITY);
         fclose(lookup);
     }
+
+    // bib text. currentIndex is the lap row the next bib is written onto.
+    int bib = 0;
+    int currentIndex = 0;
+    bool bibEdit = false;
 
     while (!WindowShouldClose()) {
         if (IsKeyPressed(KEY_F11)) ToggleBorderlessWindowed();
@@ -66,6 +80,7 @@ int main(void)
         Rectangle lapB = {x+(butW + gap), butY, butW, butH};
         Rectangle stopB = {x+2*(butW + gap), butY, butW, butH};
         Rectangle resetB = {x+3*(butW + gap), butY, butW, butH};
+        Rectangle bibBox = {GetScreenWidth() / 2.0f, listY - 50, 160, 40};
 
         BeginDrawing();
         ClearBackground(RAYWHITE);
@@ -90,11 +105,11 @@ int main(void)
                 resume_timer(&timer, GetTime());
             }
         }
-        // lap button
-        if (GuiButton(lapB, "Lap") && timerStarted) {
-            // write the time to the buffer
-            write_time(&time, lap_text[lap_count], 128, lap_count);
-            // copy the pointer of lap_text to laps
+        // lap button. Name and school stay blank until a bib is entered for this row.
+        if (GuiButton(lapB, "Lap") && timerStarted && lap_count < 200) {
+            Student none = {0};
+            lap_times[lap_count] = time;
+            write_row(&lap_times[lap_count], &none, lap_text[lap_count], 256, lap_count);
             laps[lap_count] = lap_text[lap_count];
             lap_count++;
             write_csv(file, &time, lap_count);
@@ -121,9 +136,23 @@ int main(void)
             reset_time(&time);
 
             lap_count = 0;
+            currentIndex = 0;
             scroll = 0;
             active = -1;
             focused = -1;
+        }
+
+        if (GuiValueBox(bibBox, "Enter Bib Number", &bib, 0, 9999, bibEdit)) {
+            if (bibEdit && bib > 0 && currentIndex < lap_count) {
+                Student who = {0};
+                who.bib = bib;
+                int found = search_name(roster, runners, bib);
+                if (found >= 0) who = roster[found];
+                write_row(&lap_times[currentIndex], &who, lap_text[currentIndex], 256, currentIndex);
+                active = currentIndex;
+                currentIndex++;
+            }
+            bibEdit = !bibEdit;
         }
 
         // the grid list

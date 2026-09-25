@@ -1,5 +1,4 @@
 #include <raylib.h>
-#include <stdio.h>
 #include <time.h>
 
 void start_timer(Timer *timer, int start_time) {
@@ -31,12 +30,6 @@ void read_time(Timer *timer, Time *time, double current_time) {
     time->s = (total_tenths / 10) % 60;
     time->min = (total_tenths / 600) % 60;
     time->h = total_tenths / 36000;
-}
-
-// keep this here for now
-void write_time(const Time *time, char *buffer, int buff_size, int rank) {
-    snprintf(buffer, (size_t)buff_size, "Rank: %d | Time: %02d:%02d:%02d.%03d",
-             rank+1, time->h, time->min, time->s, time->ms);
 }
 
 void reset_time(Time *time) {

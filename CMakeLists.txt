@@ -40,6 +40,66 @@ if(UNIX AND NOT APPLE)
     set(GLFW_BUILD_X11 ON CACHE BOOL "" FORCE)
 endif()
 
+# xlsxio read/write, minizip, zlib, and expat are compiled into the
+# executable. Their own CMake searches the system and would link the
+# shared libraries, so the static targets are selected here instead.
+# These directories are added before raylib so raylib's CPack include
+# remains the one that writes CPackConfig.cmake.
+set(ZLIB_BUILD_SHARED OFF CACHE BOOL "Build zlib shared library" FORCE)
+set(ZLIB_BUILD_STATIC ON CACHE BOOL "Build zlib static library" FORCE)
+set(ZLIB_BUILD_TESTING OFF CACHE BOOL "Build zlib tests" FORCE)
+set(ZLIB_INSTALL OFF CACHE BOOL "Install zlib" FORCE)
+set(ZLIB_BUILD_MINIZIP ON CACHE BOOL "Build minizip" FORCE)
+set(ZLIB_MINIZIP_BUILD_SHARED OFF CACHE BOOL "Build minizip shared library" FORCE)
+set(ZLIB_MINIZIP_BUILD_STATIC ON CACHE BOOL "Build minizip static library" FORCE)
+set(ZLIB_MINIZIP_BUILD_TESTING OFF CACHE BOOL "Build minizip tests" FORCE)
+set(ZLIB_MINIZIP_INSTALL OFF CACHE BOOL "Install minizip" FORCE)
+add_subdirectory(third_party/zlib zlib EXCLUDE_FROM_ALL)
+set_target_properties(zlibstatic libminizipstatic PROPERTIES
+    C_STANDARD 11
+    C_STANDARD_REQUIRED ON
+)
+
+set(EXPAT_SHARED_LIBS OFF)
+set(EXPAT_BUILD_TOOLS OFF)
+set(EXPAT_BUILD_EXAMPLES OFF)
+set(EXPAT_BUILD_TESTS OFF)
+set(EXPAT_BUILD_DOCS OFF)
+set(EXPAT_BUILD_PKGCONFIG OFF)
+set(EXPAT_BUILD_FUZZERS OFF)
+set(EXPAT_OSSFUZZ_BUILD OFF)
+set(EXPAT_ENABLE_INSTALL OFF)
+add_subdirectory(third_party/expat/expat expat EXCLUDE_FROM_ALL)
+
+if(NOT WIN32)
+    find_package(Threads REQUIRED)
+endif()
+
+add_library(xlsxio_read STATIC
+    third_party/xlsxio/lib/xlsxio_read.c
+    third_party/xlsxio/lib/xlsxio_read_sharedstrings.c
+)
+add_library(xlsxio_write STATIC third_party/xlsxio/lib/xlsxio_write.c)
+foreach(xlsxio_target IN ITEMS xlsxio_read xlsxio_write)
+    target_compile_definitions(${xlsxio_target}
+        PUBLIC BUILD_XLSXIO_STATIC
+        PRIVATE BUILD_XLSXIO USE_MINIZIP
+    )
+    target_include_directories(${xlsxio_target}
+        PUBLIC third_party/xlsxio/include
+        PRIVATE third_party/xlsxio/lib third_party/zlib/contrib
+    )
+    set_target_properties(${xlsxio_target} PROPERTIES
+        C_STANDARD 11
+        C_STANDARD_REQUIRED ON
+    )
+endforeach()
+target_link_libraries(xlsxio_read PUBLIC expat::expat MINIZIP::minizipstatic)
+target_link_libraries(xlsxio_write PUBLIC MINIZIP::minizipstatic)
+if(NOT WIN32)
+    target_link_libraries(xlsxio_write PUBLIC Threads::Threads)
+endif()
+
 # raylib's root CMakeLists calls project() with no LANGUAGES, which
 # enables C++. Use src/ so a C compiler is enough.
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/third_party/raylib/cmake")
@@ -68,7 +128,7 @@ endif()
 target_include_directories(CrossCountryTimer PRIVATE
     ${CMAKE_SOURCE_DIR}/include
 )
-target_link_libraries(CrossCountryTimer PRIVATE raylib pdfgen)
+target_link_libraries(CrossCountryTimer PRIVATE raylib pdfgen xlsxio_read xlsxio_write)
 
 # whisper.cpp is C++ internally; the public API (whisper.h) is C.
 option(CCT_WITH_WHISPER "Build and link whisper.cpp" ON)

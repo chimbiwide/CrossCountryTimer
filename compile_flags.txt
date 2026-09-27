@@ -1,5 +1,6 @@
 -Iinclude
 -Ithird_party/raylib/src
 -Ithird_party/pdfgen
+-Ithird_party/xlsxio/include
 -Ithird_party/whisper.cpp/include
 -Ithird_party/whisper.cpp/ggml/include

@@ -10,7 +10,7 @@ The cross country timer app built with rayGui
 
 Requires CMake 3.22+, C23 compiler(gcc 16), and (by default) a C++ compiler for whisper.cpp.
 
-`third_party/raylib` and `third_party/whisper.cpp` are git submodules. After a clone:
+`third_party/raylib`, `third_party/whisper.cpp`, `third_party/xlsxio`, `third_party/zlib`, and `third_party/expat` are git submodules. After a clone:
 
 ```bash
 git submodule update --init --recursive
@@ -21,6 +21,8 @@ Or clone with them already filled in:
 ```bash
 git clone --recurse-submodules https://github.com/chimbiwide/CrossCountryTimer.git
 ```
+
+.xlsx reading and writing is built in from xlsxio. zlib, minizip, and expat are compiled with the app and linked statically.
 
 On Debian/Ubuntu, raylib also needs X11 and OpenGL headers:
 

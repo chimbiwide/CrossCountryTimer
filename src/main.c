@@ -148,6 +148,7 @@ int main(void)
             lap_count = 0;
             currentIndex = 0;
             bib = 0;
+            for (int i = 0; i < MAX_RUNNER; i++) students[i] = (Student){0};
 
             scroll = 0;
             active = -1;

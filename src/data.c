@@ -1,5 +1,6 @@
 #include <data.h>
 #include <stdio.h>
+#include <string.h>
 
 int search_name(Student roster[], int length, int bib) {
     for (int i = 0; i < length; i++) {
@@ -41,4 +42,88 @@ void write_row(const Time *time, const Student *student, char *buffer, int buff_
                  "Rank: %d | Time: %02d:%02d:%02d.%03d",
                  rank + 1, time->h, time->min, time->s, time->ms);
     }
+}
+
+// this is a preliminary design, needs a adjustable number later
+void calcuate_score(Row stats[], int row_count, char *winner, int *winner_score, char *loser, int *loser_score){
+    char *school1 = stats[0].school;
+    int school1_count = 0;
+    int school1_score = 0;
+    int school1_tiebreaker;
+
+    char *school2 = "";
+    int school2_count = 0;
+    int school2_score = 0;
+    int school2_tiebreaker;
+
+    int i = 1;
+    if (row_count < 3) return;
+    while (strcmp(school1, school2)) {
+        school2 = stats[i].school;
+        i++;
+    }
+
+    for (int i = 0; i < row_count; i++) {
+        // compare school1
+        if (strcmp(stats[i].school, school1) == 0){
+            if (school1_count < 5 && school2_count < 8) {
+                school1_score += stats[i].rank;
+                school1_count++;
+            }
+            else if (school1_count < 5 && school2_count > 7) {
+                int diff = school2_count - 7;
+                school1_score += stats[i].rank-diff;
+                school1_count++;
+            }
+            else if (school1_count > 5) {
+                school1_count++;
+            }
+            else if (school1_count == 5) {
+                school1_tiebreaker = i;
+            }
+        }
+        // compare school2
+        else if (strcmp(stats[i].school, school2) == 0) {
+            if (school2_count < 5) {
+                school2_score += stats[i].rank;
+                school2_count++;
+            }
+            else if (school2_count < 5 && school1_count > 7) {
+                int diff = school1_count - 7;
+                school2_score += stats[i].rank-diff;
+                school2_count++;
+            }
+            else if (school2_count > 5) {
+                school2_count++;
+            }
+            else if (school2_count == 5) {
+                school2_tiebreaker = i;
+            }
+        }
+        else break;
+    }
+    if (school1_score > school2_score) {
+        snprintf(winner, sizeof(&winner), "%s", school2);
+        winner_score = &school2_score;
+        loser_score = &school1_score;
+    }
+    else if (school1_score < school2_score) {
+        snprintf(winner, sizeof(&winner), "%s", school1);
+        winner_score = &school1_score;
+        loser_score = &school2_score;
+    }
+    else {
+        // tie
+        if (school1_tiebreaker < school2_tiebreaker) {
+        snprintf(winner, sizeof(&winner), "%s", school1);
+        winner_score = &school1_score;
+        loser_score = &school2_score;
+        }
+        else if (school1_tiebreaker > school2_tiebreaker) {
+        snprintf(winner, sizeof(&winner), "%s", school2);
+        winner_score = &school2_score;
+        loser_score = &school1_score;
+        }
+    }
+
 }

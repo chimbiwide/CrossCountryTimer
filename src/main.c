@@ -67,6 +67,11 @@ int main(void)
     int currentIndex = 0;
     bool bibEdit = false;
 
+    // divison selector
+    // 0 vasity, 1 JV, 2 Freshman, 3 Middle School
+    static int division = 0;
+    static bool divisionEdit = false;
+
     while (!WindowShouldClose()) {
         if (IsKeyPressed(KEY_F11)) ToggleBorderlessWindowed();
         //list coordinates
@@ -150,6 +155,7 @@ int main(void)
         }
 
         // bib value box
+        if (divisionEdit) GuiLock();
         if (GuiValueBox(bibBox, "Enter Bib Number", &bib, 0, 9999, bibEdit)) {
             if (bibEdit && bib > 0 && currentIndex < lap_count) {
                 Student who = {0};
@@ -168,6 +174,14 @@ int main(void)
         // the grid list
         GuiListViewEx((Rectangle){listX, listY, listW, listH},
                       laps, lap_count, &scroll, &active, &focused);
+        if (divisionEdit) GuiUnlock();
+
+        // Drawn last so the open menu stays above the bib box and the lap list.
+        int divisionW = GuiGetTextWidth("Middle School") + 50;
+        if (divisionW < butW) divisionW = butW;
+        Rectangle divisionB = {x, butY+butH+gap, (float)divisionW, (float)butH};
+        if (GuiDropdownBox(divisionB, "Varsity;JV;Freshman;Middle School", &division, divisionEdit))
+            divisionEdit = !divisionEdit;
 
         sync_row(rows, lap_times, students, lap_count);
         // read the time after every frame

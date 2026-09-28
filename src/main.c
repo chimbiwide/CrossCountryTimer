@@ -11,6 +11,7 @@
 #include "raygui.h"
 
 #define CAPACITY 2048
+#define MAX_RUNNER 200
 
 int main(void)
 {
@@ -38,17 +39,19 @@ int main(void)
     Time time = {0,0,0,0,0};
 
     // Lists
-    static char lap_text[200][256];
-    static char *laps[200];
-    static Time lap_times[200];
+    static char lap_text[MAX_RUNNER][256];
+    static char *laps[MAX_RUNNER];
     static int lap_count;
     static int scroll;
     static int active;
     static int focused;
 
+    static Time lap_times[MAX_RUNNER];
+    static Student students[MAX_RUNNER];
+    static Row rows[MAX_RUNNER] = {0};
+
     // student index
     Student roster[CAPACITY] = {0};
-    Row stats[CAPACITY] = {0};
 
     int runners = 0;
     xlsxioreader reader;
@@ -109,7 +112,7 @@ int main(void)
             }
         }
         // lap button. Name and school stay blank until a bib is entered for this row.
-        if (GuiButton(lapB, "Lap") && timerStarted && lap_count < 200) {
+        if (GuiButton(lapB, "Lap") && timerStarted && lap_count < MAX_RUNNER) {
             Student none = {0};
             lap_times[lap_count] = time;
             write_row(&lap_times[lap_count], &none, lap_text[lap_count], 256, lap_count);
@@ -153,10 +156,11 @@ int main(void)
                 who.bib = bib;
                 int found = search_name(roster, runners, bib);
                 if (found >= 0) who = roster[found];
+                write_student(&who, &students[currentIndex]);
                 write_row(&lap_times[currentIndex], &who, lap_text[currentIndex], 256, currentIndex);
                 active = currentIndex;
                 currentIndex++;
-            } 
+            }
             else bib = 0;
             bibEdit = !bibEdit;
         }
@@ -165,6 +169,7 @@ int main(void)
         GuiListViewEx((Rectangle){listX, listY, listW, listH},
                       laps, lap_count, &scroll, &active, &focused);
 
+        sync_row(rows, lap_times, students, lap_count);
         // read the time after every frame
         if (timerStarted) read_time(&timer, &time, GetTime());
         EndDrawing();

@@ -48,6 +48,8 @@ int main(void)
 
     // student index
     Student roster[CAPACITY] = {0};
+    Row stats[CAPACITY] = {0};
+
     int runners = 0;
     xlsxioreader reader;
     if ((reader = xlsxioread_open("data/index.xlsx")) == NULL) 

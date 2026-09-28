@@ -1,7 +1,7 @@
 #include "xlsxio_read.h"
 #include <xlsx.h>
 #include <raylib.h>
-#include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 int read_lookup(xlsxioreader reader, const char *sheetname, Student index[], int capacity) {

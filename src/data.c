@@ -1,4 +1,5 @@
 #include <data.h>
+#include <stdio.h>
 
 int search_name(Student roster[], int length, int bib) {
     for (int i = 0; i < length; i++) {

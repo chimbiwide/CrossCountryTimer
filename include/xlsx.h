@@ -6,9 +6,10 @@
 
 typedef struct {
     int rank;
-    int bib;
+    int64_t bib;
+    char name[50];
+    char school[20];
     char time[20];
-    char school[32];
 } Row;
 
 typedef struct {

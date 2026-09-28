@@ -1,13 +1,16 @@
 #include "raylib.h"
-#include <csv.h>
-#include <time.h>
+#include <xlsxio_read.h>
+
+#include <xlsx.h>
+#include <timer.h>
 #include <font.h>
 #include <data.h>
+
 
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"
 
-#define CAPACITY 1024
+#define CAPACITY 2048
 
 int main(void)
 {
@@ -22,6 +25,7 @@ int main(void)
     SetTextureFilter(font.texture, TEXTURE_FILTER_BILINEAR);
     GuiSetFont(font);
 
+    // styling
     GuiSetStyle(LABEL, TEXT_ALIGNMENT, TEXT_ALIGN_CENTER);
     GuiSetStyle(LABEL, TEXT_COLOR_NORMAL, ColorToInt(BLACK));
     GuiSetStyle(LISTVIEW, TEXT_ALIGNMENT, TEXT_ALIGN_LEFT);
@@ -42,18 +46,15 @@ int main(void)
     static int active;
     static int focused;
 
-    // the write to file
-    FILE *file;
-    init_csv(file);
-
-    // the student index
+    // student index
     Student roster[CAPACITY] = {0};
     int runners = 0;
-    FILE *lookup = fopen("data/lookup.csv", "r");
-    if (lookup == NULL) printf("Error opening file\n");
+    xlsxioreader reader;
+    if ((reader = xlsxioread_open("data/index.xlsx")) == NULL) 
+        printf("Error opening xlsx file\n");
     else {
-        runners = read_lookup(lookup, roster, CAPACITY);
-        fclose(lookup);
+        runners = read_lookup(reader, "Student Lookup", roster, CAPACITY);
+        xlsxioread_close(reader);
     }
 
     // bib text. currentIndex is the lap row the next bib is written onto.
@@ -112,7 +113,6 @@ int main(void)
             write_row(&lap_times[lap_count], &none, lap_text[lap_count], 256, lap_count);
             laps[lap_count] = lap_text[lap_count];
             lap_count++;
-            write_csv(file, &time, lap_count);
 
             // scroll to bottom once per update
             int row = GuiGetStyle(LISTVIEW, LIST_ITEMS_HEIGHT) + GuiGetStyle(LISTVIEW, LIST_ITEMS_SPACING);
@@ -137,11 +137,14 @@ int main(void)
 
             lap_count = 0;
             currentIndex = 0;
+            bib = 0;
+
             scroll = 0;
             active = -1;
             focused = -1;
         }
 
+        // bib value box
         if (GuiValueBox(bibBox, "Enter Bib Number", &bib, 0, 9999, bibEdit)) {
             if (bibEdit && bib > 0 && currentIndex < lap_count) {
                 Student who = {0};
@@ -151,7 +154,8 @@ int main(void)
                 write_row(&lap_times[currentIndex], &who, lap_text[currentIndex], 256, currentIndex);
                 active = currentIndex;
                 currentIndex++;
-            }
+            } 
+            else bib = 0;
             bibEdit = !bibEdit;
         }
 

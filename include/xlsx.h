@@ -1,7 +1,8 @@
 #ifndef CSV_H
 #define CSV_H
 
-#include "time.h"
+#include <xlsxio_read.h>
+#include <timer.h>
 #include <stdio.h>
 
 typedef struct {
@@ -12,13 +13,11 @@ typedef struct {
 } Row;
 
 typedef struct {
-    int bib;
+    int64_t bib;
     char name[50];
     char school[20];
 } Student;
 
-void init_csv(FILE *file);
-void write_csv(FILE *file, const Time *time, int rank);
-int read_lookup(FILE *lookup, Student index[], int capacity);
+int read_lookup(xlsxioreader reader, const char *sheetname, Student index[], int capacity);
 
 #endif

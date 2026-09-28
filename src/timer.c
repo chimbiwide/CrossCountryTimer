@@ -1,5 +1,5 @@
 #include <raylib.h>
-#include <time.h>
+#include <timer.h>
 
 void start_timer(Timer *timer, int start_time) {
     timer->running = true;

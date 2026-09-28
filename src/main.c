@@ -177,11 +177,21 @@ int main(void)
         if (divisionEdit) GuiUnlock();
 
         // Drawn last so the open menu stays above the bib box and the lap list.
-        int divisionW = GuiGetTextWidth("Middle School") + 50;
+        int divisionW = GuiGetTextWidth("Middle School") + 62;
         if (divisionW < butW) divisionW = butW;
         Rectangle divisionB = {x, butY+butH+gap, (float)divisionW, (float)butH};
         if (GuiDropdownBox(divisionB, "Varsity;JV;Freshman;Middle School", &division, divisionEdit))
             divisionEdit = !divisionEdit;
+
+        // Export PDF
+        int pdfW = GuiGetTextWidth("Export to PDF") + 64;
+        Rectangle pdfB = {x+(float)divisionW+gap, butY+butH+gap, (float)pdfW, (float)butH};
+        if (GuiButton(pdfB, "Export to PDF") && !timerStarted) {
+            // calculate score
+            // brings up pop up panel
+            // display winner
+            // print to pdf
+        }
 
         sync_row(rows, lap_times, students, lap_count);
         // read the time after every frame

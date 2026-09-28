@@ -1,9 +1,8 @@
-#ifndef CSV_H
-#define CSV_H
+#ifndef XLSX_H
+#define XLSX_H
 
 #include <xlsxio_read.h>
 #include <timer.h>
-#include <stdio.h>
 
 typedef struct {
     int rank;

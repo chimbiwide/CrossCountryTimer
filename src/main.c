@@ -220,8 +220,32 @@ int main(void)
                 Result results[DIV_COUNT] = {0};
                 score_teams(rows, lap_count, results);
 
-                if (write_results_pdf("results.pdf", rows, lap_count, results) < 0){
-                    printf("PDF SAVE FAILED\n");
+                // master list: every runner, overall places
+                if (write_results_pdf("results.pdf", rows, lap_count, results) < 0) {
+                    printf("PDF SAVE FAILED: results.pdf\n");
+                }
+
+                // one PDF per division that ran
+                Row division_rows[MAX_RUNNER];
+                for (int div_slot = 0; div_slot < DIV_COUNT; div_slot++) {
+                    if (results[div_slot].division[0] == '\0') continue;
+
+                    int division_row_count = get_division_rows(
+                        rows, lap_count, div_slot, division_rows);
+
+                    char path[64];
+                    snprintf(path, sizeof(path), "results_%s.pdf",
+                             division_name(div_slot));
+
+                    if (write_division_pdf(path, division_rows,
+                                           division_row_count,
+                                           results[div_slot].winner,
+                                           results[div_slot].winnerScore,
+                                           results[div_slot].loser,
+                                           results[div_slot].loserScore,
+                                           division_name(div_slot)) < 0) {
+                        printf("PDF SAVE FAILED: %s\n", path);
+                    }
                 }
             }
         }

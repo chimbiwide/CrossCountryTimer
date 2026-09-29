@@ -137,7 +137,6 @@ void calcuate_score(Row stats[], int row_count, char *winner, int *winner_score,
         *loser_score = school1_score;
         }
     }
-
 }
 
 int find_division(const char *division_code) {
@@ -148,24 +147,29 @@ int find_division(const char *division_code) {
     return -1;
 }
 
+int get_division_rows(Row complete[], int row_count, int division, Row division_rows[]) {
+    int division_row_count = 0;
+    for (int row = 0; row < row_count; row++) {
+        if (find_division(complete[row].division) == division && complete[row].school[0] != '\0') {
+            division_rows[division_row_count] = complete[row];
+            division_row_count++;
+        }
+    }
+    for (int place = 0; place < division_row_count; place++) {
+        division_rows[place].rank = place+1;
+    }
+    return division_row_count;
+}
+
 void score_teams(Row complete[], int row_count, Result results[]) {
     Row division_rows[MAX_RUNNER];
 
     for (int division = 0; division < DIV_COUNT; division++) {
         results[division] = (Result){0};
 
-        int division_row_count = 0;
-        for (int row = 0; row < row_count; row++) {
-            if (find_division(complete[row].division) == division && complete[row].school[0] != '\0') {
-                division_rows[division_row_count] = complete[row];
-                division_row_count++;
-            }
-        }
+        int division_row_count = get_division_rows(complete, row_count, division, division_rows);
         if (division_row_count == 0) continue;
 
-        for (int place = 0; place < division_row_count; place++) {
-            division_rows[place].rank = place+1;
-        }
         snprintf(results[division].division,
                  sizeof(results[division].division),
                  "%s", division_rows[0].division);
@@ -175,4 +179,11 @@ void score_teams(Row complete[], int row_count, Result results[]) {
                        results[division].loser,
                        &results[division].loserScore);
     }
+}
+
+const char *division_name(int division) {
+    if (division == 1) return "JV";
+    if (division == 2) return "Freshman";
+    if (division == 3) return "MS";
+    return "Varsity";
 }

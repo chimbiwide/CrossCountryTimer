@@ -10,5 +10,7 @@ void sync_row(Row stats[], Time lap_times[], Student students[], int size);
 void calcuate_score(Row stats[], int row_count, char *winner, int *winner_score, char *loser, int *loser_score);
 int find_division(const char *division_code);
 void score_teams(Row complete[], int row_count, Result results[]);
+int get_division_rows(Row complete[], int row_count, int division, Row division_rows[]);
+const char *division_name(int division);
 
 #endif

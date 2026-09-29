@@ -89,16 +89,6 @@ cmake --build build
 
 ---
 
-### TO-DO
-
-1. Temperature
-2. Wind
-3. Precipitation
-4. clouds
-5. records
-
----
-
 ### Division
 
 - Freshman
@@ -107,6 +97,3 @@ cmake --build build
 - Middleman
 
 New column for divsion: F, V, J, M
-
-2 + 1 + 4 + 6:q
-

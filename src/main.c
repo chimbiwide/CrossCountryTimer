@@ -73,10 +73,13 @@ int main(void)
     static int division = 0;
     static bool divisionEdit = false;
 
+    // edit mode checkbox
+    bool edit_mode = false;
+
     while (!WindowShouldClose()) {
         if (IsKeyPressed(KEY_F11)) ToggleBorderlessWindowed();
         //list coordinates
-        float listW = GetScreenWidth() / 2.0f;
+        float listW = GetScreenWidth() * 0.75f;
         float listH = GetScreenHeight() / 2.0f;
         float listX = (((float)GetScreenWidth() - listW) / 2.0f);
         float listY = GetScreenHeight() / 2.0f;
@@ -92,7 +95,8 @@ int main(void)
         Rectangle lapB = {x+(butW + gap), butY, butW, butH};
         Rectangle stopB = {x+2*(butW + gap), butY, butW, butH};
         Rectangle resetB = {x+3*(butW + gap), butY, butW, butH};
-        Rectangle bibBox = {GetScreenWidth() / 2.0f, listY - 50, 160, 40};
+        Rectangle bibBox = {GetScreenWidth() / 2.0f-200, listY - 50, 160, 40};
+        Rectangle editBox = {(GetScreenWidth() / 2.0f)+50, listY - 50, 250, 40};
 
         BeginDrawing();
         ClearBackground(RAYWHITE);
@@ -159,24 +163,33 @@ int main(void)
         // bib value box
         if (divisionEdit) GuiLock();
         if (GuiValueBox(bibBox, "Enter Bib Number", &bib, 0, 9999, bibEdit)) {
-            if (bibEdit && bib > 0 && currentIndex < lap_count) {
+            int row = currentIndex;
+            if (edit_mode) row = active;
+            if (bibEdit && bib > 0 && row >= 0 && row < lap_count) {
                 Student who = {0};
                 who.bib = bib;
                 int found = search_name(roster, runners, bib);
                 if (found >= 0) who = roster[found];
-                write_student(&who, &students[currentIndex]);
-                write_row(&lap_times[currentIndex], &who, lap_text[currentIndex], 256, currentIndex);
-                active = currentIndex;
-                currentIndex++;
+                write_student(&who, &students[row]);
+                write_row(&lap_times[row], &who, lap_text[row], 256, row);
+                if (!edit_mode) {
+                    active = currentIndex;
+                    currentIndex++;
+                }
             }
             else bib = 0;
             bibEdit = !bibEdit;
         }
-
         // the grid list
         GuiListViewEx((Rectangle){listX, listY, listW, listH},
                       laps, lap_count, &scroll, &active, &focused);
+
+        // the edit mode toggle
+        const char *editLabel = "Edit Mode: OFF";
+        if (edit_mode) editLabel = "Edit Mode: ON";
+        GuiToggle(editBox, editLabel, &edit_mode);
         if (divisionEdit) GuiUnlock();
+
 
         // Drawn last so the open menu stays above the bib box and the lap list.
         int divisionW = GuiGetTextWidth("Middle School") + 62;

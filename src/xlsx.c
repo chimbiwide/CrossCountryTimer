@@ -20,17 +20,23 @@ int read_lookup(xlsxioreader reader, const char *sheetname, Student index[], int
             int64_t bib = 0;
             char *name = NULL;
             char *school = NULL;
+            char *division = NULL;
+
             int got_bib = xlsxioread_sheet_next_cell_int(sheet, &bib);
             int got_name = xlsxioread_sheet_next_cell_string(sheet, &name);
             int got_school = xlsxioread_sheet_next_cell_string(sheet, &school);
+            int got_division = xlsxioread_sheet_next_cell_string(sheet, &division);
             if (got_bib && got_name && got_school) {
                 index[count].bib = bib;
                 snprintf(index[count].name, sizeof(index[count].name), "%s", name);
                 snprintf(index[count].school, sizeof(index[count].school), "%s", school);
+                snprintf(index[count].division, sizeof(index[count].division), "%s",
+                         (got_division && division[0] != '\0') ? division : "V");
                 count++;
             }
             xlsxioread_free(name);
             xlsxioread_free(school);
+            xlsxioread_free(division);
         }
         xlsxioread_sheet_close(sheet);
     }

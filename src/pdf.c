@@ -65,7 +65,7 @@ int write_results_pdf(const char *path, Row rows[], int row_count,
 
     char summary[128];
     snprintf(summary, sizeof(summary),
-             "Win: %s    %d        Lose: %s    %d",
+             "Win: %s    %d        Finish: %s    %d",
              winner, winner_score, loser, loser_score);
     pdf_set_font(pdf, "Helvetica");
     pdf_add_text(pdf, page, summary, 12, 36, y - 12, PDF_BLACK);

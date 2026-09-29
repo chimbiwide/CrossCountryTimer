@@ -1,6 +1,7 @@
 #include "raylib.h"
 #include <xlsxio_read.h>
 
+#include <pdf.h>
 #include <xlsx.h>
 #include <timer.h>
 #include <font.h>
@@ -188,13 +189,28 @@ int main(void)
         int pdfW = GuiGetTextWidth("Export to PDF") + 64;
         Rectangle pdfB = {x+(float)divisionW+gap, butY+butH+gap, (float)pdfW, (float)butH};
         if (GuiButton(pdfB, "Export to PDF") && !timerStarted) {
-            // calculate score
-            // brings up pop up panel
-            // display winner
-            // print to pdf
-        }
+            if (lap_count > 0) {
+                sync_row(rows, lap_times, students, lap_count);
 
-        sync_row(rows, lap_times, students, lap_count);
+                char winner[20] = "";
+                char loser[20] = "";
+                int winner_score = 0;
+                int loser_score = 0;
+                calcuate_score(rows, lap_count, winner, &winner_score, loser, &loser_score);
+
+                const char *division_name = "Varsity";
+                if (division == 1) division_name = "JV";
+                if (division == 2) division_name = "Freshman";
+                if (division == 3) division_name = "Middle School";
+
+                if (write_results_pdf("results.pdf", rows, lap_count,
+                                      winner, winner_score,
+                                      loser, loser_score,
+                                      division_name) < 0) {
+                    printf("PDF save failed\n");
+                }
+            }
+        }
         // read the time after every frame
         if (timerStarted) read_time(&timer, &time, GetTime());
         EndDrawing();

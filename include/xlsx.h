@@ -4,6 +4,9 @@
 #include <xlsxio_read.h>
 #include <timer.h>
 
+#define DIV_COUNT 4
+#define MAX_RUNNER 200
+
 typedef struct {
     int rank;
     int64_t bib;
@@ -12,6 +15,14 @@ typedef struct {
     char division[4];
     char time[20];
 } Row;
+
+typedef struct {
+    char division[4];
+    char winner[20];
+    int winnerScore;
+    char loser[20];
+    int loserScore;
+} Result;
 
 typedef struct {
     int64_t bib;

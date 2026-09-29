@@ -23,11 +23,14 @@ static void draw_header(struct pdf_doc *pdf, struct pdf_object *page,
     pdf_set_font(pdf, "Helvetica");
 }
 
-int write_results_pdf(const char *path, Row rows[], int row_count,
-                      const char *winner, int winner_score,
-                      const char *loser, int loser_score,
-                      const char *division)
-{
+static const char *division_name(int division) {
+    if (division == 1) return "JV";
+    if (division == 2) return "Freshman";
+    if (division == 3) return "MS";
+    return "Varsity";
+}
+
+int write_results_pdf(const char *path, Row rows[], int row_count, Result results[]) {
     struct pdf_info info = {
         .creator = "chimbiwide",
         .producer = "SJ",
@@ -57,19 +60,30 @@ int write_results_pdf(const char *path, Row rows[], int row_count,
         return -1;
     }
 
-    char title[64];
-    snprintf(title, sizeof(title), "%s Results", division);
     pdf_set_font(pdf, "Helvetica-Bold");
-    pdf_add_text(pdf, page, title, 16, 36, y - 16, PDF_BLACK);
+    pdf_add_text(pdf, page, "Meet Results", 16, 36, y - 16, PDF_BLACK);
     y = y - 28;
 
+    // one summary line for each division that ran
     char summary[128];
-    snprintf(summary, sizeof(summary),
-             "Win: %s    %d        Finish: %s    %d",
-             winner, winner_score, loser, loser_score);
     pdf_set_font(pdf, "Helvetica");
-    pdf_add_text(pdf, page, summary, 12, 36, y - 12, PDF_BLACK);
-    y = y - 28;
+    for (int division = 0; division < DIV_COUNT; division++) {
+        if (results[division].division[0] == '\0') continue;
+
+        if (results[division].winner[0] == '\0') {
+            snprintf(summary, sizeof(summary), "%s    no team score",
+                     division_name(division));
+        } else {
+            snprintf(summary, sizeof(summary),
+                     "%s    Win: %s    %d        Finish: %s    %d",
+                     division_name(division),
+                     results[division].winner, results[division].winnerScore,
+                     results[division].loser, results[division].loserScore);
+        }
+        pdf_add_text(pdf, page, summary, 12, 36, y - 12, PDF_BLACK);
+        y = y - 18;
+    }
+    y = y - 10;
 
     draw_header(pdf, page, col_x, col_w, y - 18);
     y = y - 18;

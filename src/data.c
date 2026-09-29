@@ -1,6 +1,8 @@
 #include <data.h>
 #include <stdio.h>
 #include <string.h>
+#include <limits.h>
+#include <xlsx.h>
 
 int search_name(Student roster[], int length, int bib) {
     for (int i = 0; i < length; i++) {
@@ -51,14 +53,14 @@ void calcuate_score(Row stats[], int row_count, char *winner, int *winner_score,
     char *school1 = stats[0].school;
     int school1_count = 0;
     int school1_score = 0;
-    int school1_tiebreaker;
+    int school1_tiebreaker = INT_MAX;
 
     size_t school_len = sizeof(stats[0].school);
 
     char *school2 = "";
     int school2_count = 0;
     int school2_score = 0;
-    int school2_tiebreaker;
+    int school2_tiebreaker = INT_MAX;
 
     int i = 1;
     while (i < row_count && strcmp(school1, stats[i].school) == 0) {
@@ -138,5 +140,39 @@ void calcuate_score(Row stats[], int row_count, char *winner, int *winner_score,
 
 }
 
-void score_teams(Row complete[], int row_count);
+int find_division(const char *division_code) {
+    if (division_code[0] == 'V') return 0;
+    if (division_code[0] == 'J') return 1;
+    if (division_code[0] == 'F') return 2;
+    if (division_code[0] == 'M') return 3;
+    return -1;
+}
 
+void score_teams(Row complete[], int row_count, Result results[]) {
+    Row division_rows[MAX_RUNNER];
+
+    for (int division = 0; division < DIV_COUNT; division++) {
+        results[division] = (Result){0};
+
+        int division_row_count = 0;
+        for (int row = 0; row < row_count; row++) {
+            if (find_division(complete[row].division) == division && complete[row].school[0] != '\0') {
+                division_rows[division_row_count] = complete[row];
+                division_row_count++;
+            }
+        }
+        if (division_row_count == 0) continue;
+
+        for (int place = 0; place < division_row_count; place++) {
+            division_rows[place].rank = place+1;
+        }
+        snprintf(results[division].division,
+                 sizeof(results[division].division),
+                 "%s", division_rows[0].division);
+        calcuate_score(division_rows, division_row_count,
+                       results[division].winner,
+                       &results[division].winnerScore,
+                       results[division].loser,
+                       &results[division].loserScore);
+    }
+}

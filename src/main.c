@@ -14,7 +14,6 @@
 #include "raygui.h"
 
 #define CAPACITY 2048
-#define MAX_RUNNER 200
 
 int main(void)
 {
@@ -218,22 +217,11 @@ int main(void)
             if (lap_count > 0) {
                 sync_row(rows, lap_times, students, lap_count);
 
-                char winner[20] = "";
-                char loser[20] = "";
-                int winner_score = 0;
-                int loser_score = 0;
-                calcuate_score(rows, lap_count, winner, &winner_score, loser, &loser_score);
+                Result results[DIV_COUNT] = {0};
+                score_teams(rows, lap_count, results);
 
-                const char *division_name = "Varsity";
-                if (division == 1) division_name = "JV";
-                if (division == 2) division_name = "Freshman";
-                if (division == 3) division_name = "Middle School";
-
-                if (write_results_pdf("results.pdf", rows, lap_count,
-                                      winner, winner_score,
-                                      loser, loser_score,
-                                      division_name) < 0) {
-                    printf("PDF save failed\n");
+                if (write_results_pdf("results.pdf", rows, lap_count, results) < 0){
+                    printf("PDF SAVE FAILED\n");
                 }
             }
         }

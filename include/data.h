@@ -8,5 +8,6 @@ void write_row(const Time *time, const Student *student, char *buffer, int buff_
 void write_student(Student *source, Student *target);
 void sync_row(Row stats[], Time lap_times[], Student students[], int size);
 void calcuate_score(Row stats[], int row_count, char *winner, int *winner_score, char *loser, int *loser_score);
+void score_teams(Row complete[], int row_count);
 
 #endif

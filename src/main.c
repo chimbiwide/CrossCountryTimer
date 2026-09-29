@@ -1,3 +1,5 @@
+#define RAYGUI_WINDOWBOX_STATUSBAR_HEIGHT 44
+#define RAYGUI_WINDOWBOX_CLOSEBUTTON_HEIGHT 30
 #include "raylib.h"
 #include <xlsxio_read.h>
 
@@ -75,6 +77,9 @@ int main(void)
 
     // edit mode checkbox
     bool edit_mode = false;
+    
+    // settings box
+    bool showSettings = false;
 
     while (!WindowShouldClose()) {
         if (IsKeyPressed(KEY_F11)) ToggleBorderlessWindowed();
@@ -97,6 +102,7 @@ int main(void)
         Rectangle resetB = {x+3*(butW + gap), butY, butW, butH};
         Rectangle bibBox = {GetScreenWidth() / 2.0f-200, listY - 50, 160, 40};
         Rectangle editBox = {(GetScreenWidth() / 2.0f)+50, listY - 50, 250, 40};
+        Rectangle settingsB = {10, 10, butH, butH};
 
         BeginDrawing();
         ClearBackground(RAYWHITE);
@@ -110,7 +116,14 @@ int main(void)
                             time.s, 
                             time.pre_ms)
                  );
+
+        if (showSettings) GuiLock();
         GuiSetStyle(DEFAULT, TEXT_SIZE, 30);
+
+        // settings gear
+        GuiSetIconScale(2);
+        if (GuiButton(settingsB, GuiIconText(ICON_GEAR, NULL))) showSettings = true;
+        GuiSetIconScale(1);
 
         // the start button
         if (GuiButton(startB, "Start") && !timerStarted) {
@@ -223,6 +236,20 @@ int main(void)
                     printf("PDF save failed\n");
                 }
             }
+        }
+
+        //settings
+        if (showSettings) {
+            GuiUnlock();
+            DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(BLACK, 0.4f));
+
+            Rectangle panel = {GetScreenWidth()/2.0f-250, GetScreenHeight()/2.0f-200, 500, 400};
+            if (GuiWindowBox(panel, "Settings")) showSettings = false;
+
+              // (the content area starts at panel.y + RAYGUI_WINDOWBOX_STATUSBAR_HEIGHT)
+            //
+            Rectangle closeB = {panel.x + panel.width-140, panel.y+panel.height-60, 120, 40};
+            if (GuiButton(closeB, "Close")) showSettings = false;
         }
         // read the time after every frame
         if (timerStarted) read_time(&timer, &time, GetTime());

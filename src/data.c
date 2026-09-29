@@ -137,3 +137,6 @@ void calcuate_score(Row stats[], int row_count, char *winner, int *winner_score,
     }
 
 }
+
+void score_teams(Row complete[], int row_count);
+

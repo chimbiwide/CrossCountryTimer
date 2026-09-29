@@ -13,10 +13,10 @@ static void draw_cell(struct pdf_doc *pdf, struct pdf_object *page,
 static void draw_header(struct pdf_doc *pdf, struct pdf_object *page,
                         float *col_x, float *col_w, float bottom)
 {
-    const char *titles[5] = {"Rank", "Bib", "Name", "School", "Time"};
+    const char *titles[6] = {"Rank", "Bib", "Name", "School", "Division", "Time"};
 
     pdf_set_font(pdf, "Helvetica-Bold");
-    for (int c = 0; c < 5; c++) {
+    for (int c = 0; c < 6; c++) {
         draw_cell(pdf, page, col_x[c], bottom, col_w[c], 18,
                   titles[c], PDF_RGB(220, 220, 220));
     }
@@ -41,10 +41,10 @@ int write_results_pdf(const char *path, Row rows[], int row_count,
     struct pdf_doc *pdf = pdf_create(PDF_LETTER_HEIGHT, PDF_LETTER_WIDTH, &info);
     if (pdf == NULL) return -1;
 
-    float col_w[5] = {48, 56, 240, 200, 176};
-    float col_x[5];
+    float col_w[6] = {48, 56, 240, 200, 56, 120};
+    float col_x[6];
     col_x[0] = 36;
-    for (int c = 1; c < 5; c++) {
+    for (int c = 1; c < 6; c++) {
         col_x[c] = col_x[c - 1] + col_w[c - 1];
     }
 
@@ -104,7 +104,8 @@ int write_results_pdf(const char *path, Row rows[], int row_count,
         draw_cell(pdf, page, col_x[1], bottom, col_w[1], 18, bib_text, fill);
         draw_cell(pdf, page, col_x[2], bottom, col_w[2], 18, rows[i].name, fill);
         draw_cell(pdf, page, col_x[3], bottom, col_w[3], 18, rows[i].school, fill);
-        draw_cell(pdf, page, col_x[4], bottom, col_w[4], 18, rows[i].time, fill);
+        draw_cell(pdf, page, col_x[4], bottom, col_w[4], 18, rows[i].division, fill);
+        draw_cell(pdf, page, col_x[5], bottom, col_w[5], 18, rows[i].time, fill);
 
         y = bottom;
     }

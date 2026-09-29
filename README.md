@@ -105,3 +105,8 @@ cmake --build build
 - Varsity
 - JV 
 - Middleman
+
+New column for divsion: F, V, J, M
+
+2 + 1 + 4 + 6:q
+

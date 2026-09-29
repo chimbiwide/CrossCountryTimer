@@ -51,17 +51,19 @@ void calcuate_score(Row stats[], int row_count, char *winner, int *winner_score,
     int school1_score = 0;
     int school1_tiebreaker;
 
+    size_t school_len = sizeof(stats[0].school);
+
     char *school2 = "";
     int school2_count = 0;
     int school2_score = 0;
     int school2_tiebreaker;
 
     int i = 1;
-    if (row_count < 3) return;
-    while (strcmp(school1, school2)) {
-        school2 = stats[i].school;
+    while (i < row_count && strcmp(school1, stats[i].school) == 0) {
         i++;
     }
+    if (i >= row_count) return;
+    school2 = stats[i].school;
 
     for (int i = 0; i < row_count; i++) {
         // compare school1
@@ -79,12 +81,13 @@ void calcuate_score(Row stats[], int row_count, char *winner, int *winner_score,
                 school1_count++;
             }
             else if (school1_count == 5) {
-                school1_tiebreaker = i;
+                school1_tiebreaker = stats[i].rank;
+                school1_count++;
             }
         }
         // compare school2
         else if (strcmp(stats[i].school, school2) == 0) {
-            if (school2_count < 5) {
+            if (school2_count < 5 && school1_count < 8) {
                 school2_score += stats[i].rank;
                 school2_count++;
             }
@@ -97,32 +100,37 @@ void calcuate_score(Row stats[], int row_count, char *winner, int *winner_score,
                 school2_count++;
             }
             else if (school2_count == 5) {
-                school2_tiebreaker = i;
+                school2_tiebreaker = stats[i].rank;
+                school2_count++;
             }
         }
-        else break;
+        else continue;
     }
     if (school1_score > school2_score) {
-        snprintf(winner, sizeof(&winner), "%s", school2);
-        winner_score = &school2_score;
-        loser_score = &school1_score;
+        snprintf(winner, school_len, "%s", school2);
+        *winner_score = school2_score;
+        snprintf(loser, school_len, "%s", school1);
+        *loser_score = school1_score;
     }
     else if (school1_score < school2_score) {
-        snprintf(winner, sizeof(&winner), "%s", school1);
-        winner_score = &school1_score;
-        loser_score = &school2_score;
+        snprintf(winner, school_len, "%s", school1);
+        *winner_score = school1_score;
+        snprintf(loser, school_len, "%s", school2);
+        *loser_score = school2_score;
     }
     else {
         // tie
         if (school1_tiebreaker < school2_tiebreaker) {
-        snprintf(winner, sizeof(&winner), "%s", school1);
-        winner_score = &school1_score;
-        loser_score = &school2_score;
+        snprintf(winner, school_len, "%s", school1);
+        *winner_score = school1_score;
+        snprintf(loser, school_len, "%s", school2);
+        *loser_score = school2_score;
         }
         else if (school1_tiebreaker > school2_tiebreaker) {
-        snprintf(winner, sizeof(&winner), "%s", school2);
-        winner_score = &school2_score;
-        loser_score = &school1_score;
+        snprintf(winner, school_len, "%s", school2);
+        *winner_score = school2_score;
+        snprintf(loser, school_len, "%s", school1);
+        *loser_score = school1_score;
         }
     }
 

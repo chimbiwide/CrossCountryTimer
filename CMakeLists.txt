@@ -118,6 +118,7 @@ add_executable(CrossCountryTimer
     src/font.c
     src/data.c
     src/xlsx.c
+    src/pdf.c
 )
 # GUI subsystem: double-clicking the exe opens the app window only.
 # The .rc is the Explorer icon. windres finds the .ico beside the script.

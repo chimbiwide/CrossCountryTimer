@@ -12,13 +12,26 @@ if(CMAKE_HOST_WIN32 AND NOT CMAKE_GENERATOR MATCHES "MinGW Makefiles|Ninja|Visua
         "The generator '${CMAKE_GENERATOR}' needs the Visual Studio C compiler.")
 endif()
 
-# #embed needs GCC 16. Pin it before project() so the cache does not pick up
-if(UNIX AND NOT APPLE)
-    set(CMAKE_C_COMPILER gcc-16 CACHE FILEPATH "C compiler" FORCE)
-    set(CMAKE_CXX_COMPILER g++-16 CACHE FILEPATH "C++ compiler" FORCE)
+# #embed needs GCC 16. Distros with an older default gcc install it as gcc-16,
+# so use that name when it exists; otherwise keep the default compiler (Fedora's
+# gcc is already 16). -DCMAKE_C_COMPILER=... or CC still override this.
+if(UNIX AND NOT APPLE AND NOT DEFINED CMAKE_C_COMPILER AND NOT DEFINED ENV{CC})
+    find_program(CCT_GCC16 gcc-16)
+    find_program(CCT_GXX16 g++-16)
+    if(CCT_GCC16 AND CCT_GXX16)
+        set(CMAKE_C_COMPILER ${CCT_GCC16} CACHE FILEPATH "C compiler")
+        set(CMAKE_CXX_COMPILER ${CCT_GXX16} CACHE FILEPATH "C++ compiler")
+    endif()
 endif()
 
 project(CrossCountryTimer LANGUAGES C)
+
+if(UNIX AND NOT APPLE AND CMAKE_C_COMPILER_ID STREQUAL "GNU"
+   AND CMAKE_C_COMPILER_VERSION VERSION_LESS 16)
+    message(FATAL_ERROR
+        "#embed needs GCC 16, but ${CMAKE_C_COMPILER} is GCC ${CMAKE_C_COMPILER_VERSION}.\n"
+        "Install gcc-16 or configure with -DCMAKE_C_COMPILER=<path to GCC 16>.")
+endif()
 
 set(CMAKE_C_STANDARD 23)
 set(CMAKE_C_STANDARD_REQUIRED ON)

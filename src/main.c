@@ -284,7 +284,10 @@ int main(void)
             GuiUnlock();
             DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(BLACK, 0.4f));
 
-            Rectangle panel = {GetScreenWidth()/2.0f-250, GetScreenHeight()/2.0f-200, 500, 400};
+            // 1/sqrt(2) of each side, so the panel covers half the screen's area
+            float panelW = GetScreenWidth() * 0.7071f;
+            float panelH = GetScreenHeight() * 0.7071f;
+            Rectangle panel = {(GetScreenWidth()-panelW)/2.0f, (GetScreenHeight()-panelH)/2.0f, panelW, panelH};
             if (GuiWindowBox(panel, "Settings")) showSettings = false;
 
               // (the content area starts at panel.y + RAYGUI_WINDOWBOX_STATUSBAR_HEIGHT)

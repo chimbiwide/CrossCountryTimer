@@ -43,10 +43,20 @@ endif()
 
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build static libraries" FORCE)
 set(BUILD_EXAMPLES OFF CACHE BOOL "Build raylib examples" FORCE)
-set(PLATFORM Desktop CACHE STRING "raylib platform")
+# SetGamepadVibration() only works on raylib's SDL backend; the GLFW one
+# (CCT_WITH_SDL=OFF) has no rumble. PLATFORM is forced so a build directory
+# configured before this option existed switches over instead of keeping
+# its cached GLFW setting.
+option(CCT_WITH_SDL "Use raylib's SDL3 backend (needed for gamepad rumble)" ON)
+if(CCT_WITH_SDL)
+    set(PLATFORM SDL CACHE STRING "raylib platform" FORCE)
+else()
+    set(PLATFORM Desktop CACHE STRING "raylib platform" FORCE)
+endif()
 set(OPENGL_VERSION OFF CACHE STRING "raylib OpenGL version")
 set(USE_EXTERNAL_GLFW OFF CACHE STRING "Use system GLFW")
 set(USE_AUDIO ON CACHE BOOL "raylib audio")
+# GLFW is only built when CCT_WITH_SDL is OFF.
 # X11/Wayland exist only on Linux. On Windows, GLFW's own options select Win32.
 if(UNIX AND NOT APPLE)
     set(GLFW_BUILD_WAYLAND OFF CACHE BOOL "" FORCE)
@@ -111,6 +121,29 @@ target_link_libraries(xlsxio_read PUBLIC expat::expat MINIZIP::minizipstatic)
 target_link_libraries(xlsxio_write PUBLIC MINIZIP::minizipstatic)
 if(NOT WIN32)
     target_link_libraries(xlsxio_write PUBLIC Threads::Threads)
+endif()
+
+# SDL3 is compiled into the executable like the other dependencies. It is
+# added before raylib, which then uses the SDL3::SDL3 target instead of
+# searching the system. SDL_INSTALL puts SDL3-static in an export set;
+# without it raylib's install(EXPORT) stops the configure step.
+if(CCT_WITH_SDL)
+    set(SDL_SHARED OFF CACHE BOOL "Build SDL shared library" FORCE)
+    set(SDL_STATIC ON CACHE BOOL "Build SDL static library" FORCE)
+    set(SDL_TEST_LIBRARY OFF CACHE BOOL "Build SDL test library" FORCE)
+    set(SDL_INSTALL ON CACHE BOOL "SDL install rules" FORCE)
+    # X11 only, as with GLFW. XScrnSaver and XTest are not used here and
+    # each would need one more -dev package.
+    if(UNIX AND NOT APPLE)
+        set(SDL_WAYLAND OFF CACHE BOOL "" FORCE)
+        set(SDL_X11_XSCRNSAVER OFF CACHE BOOL "" FORCE)
+        set(SDL_X11_XTEST OFF CACHE BOOL "" FORCE)
+    endif()
+    # SDL's Windows sources include C++, so the executable links as C++.
+    if(WIN32)
+        enable_language(CXX)
+    endif()
+    add_subdirectory(third_party/SDL SDL EXCLUDE_FROM_ALL)
 endif()
 
 # raylib's root CMakeLists calls project() with no LANGUAGES, which

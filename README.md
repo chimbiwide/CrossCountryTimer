@@ -10,7 +10,7 @@ The cross country timer app built with rayGui
 
 Requires CMake 3.22+, C23 compiler(gcc 16), and (by default) a C++ compiler for whisper.cpp.
 
-`third_party/raylib`, `third_party/whisper.cpp`, `third_party/xlsxio`, `third_party/zlib`, and `third_party/expat` are git submodules. After a clone:
+`third_party/raylib`, `third_party/SDL`, `third_party/whisper.cpp`, `third_party/xlsxio`, `third_party/zlib`, and `third_party/expat` are git submodules. After a clone:
 
 ```bash
 git submodule update --init --recursive
@@ -24,12 +24,24 @@ git clone --recurse-submodules https://github.com/chimbiwide/CrossCountryTimer.g
 
 .xlsx reading and writing is built in from xlsxio. zlib, minizip, and expat are compiled with the app and linked statically.
 
-On Debian/Ubuntu, raylib also needs X11 and OpenGL headers:
+raylib runs on its SDL3 backend, which is what makes gamepad rumble work. SDL3 (`third_party/SDL`) is compiled with the app and linked statically.
+
+On Debian/Ubuntu, raylib and SDL also need X11, OpenGL, and udev headers:
 
 ```bash
 sudo apt install build-essential cmake git \
     libgl1-mesa-dev libx11-dev libxcursor-dev libxinerama-dev \
-    libxrandr-dev libxi-dev libxext-dev libasound2-dev
+    libxrandr-dev libxi-dev libxext-dev libxfixes-dev libasound2-dev \
+    libudev-dev
+```
+
+On Fedora:
+
+```bash
+sudo dnf install gcc gcc-c++ cmake git \
+    mesa-libGL-devel libX11-devel libXcursor-devel libXinerama-devel \
+    libXrandr-devel libXi-devel libXext-devel libXfixes-devel alsa-lib-devel \
+    systemd-devel
 ```
 
 Configure and compile from the repo root:
@@ -84,6 +96,13 @@ whisper.cpp is linked in by default (`CCT_WITH_WHISPER=ON`) and is the slow part
 
 ```bash
 cmake -S . -B build -DCCT_WITH_WHISPER=OFF
+cmake --build build
+```
+
+The SDL3 backend is the default (`CCT_WITH_SDL=ON`). To build on raylib's GLFW backend instead, which has no gamepad rumble:
+
+```bash
+cmake -S . -B build -DCCT_WITH_SDL=OFF
 cmake --build build
 ```
 

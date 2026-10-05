@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #define RAYGUI_WINDOWBOX_STATUSBAR_HEIGHT 44
 #define RAYGUI_WINDOWBOX_CLOSEBUTTON_HEIGHT 30
 #include "raylib.h"
@@ -8,6 +9,11 @@
 #include <timer.h>
 #include <font.h>
 #include <data.h>
+
+#define XBOX_ALIAS_1 "xbox"
+#define XBOX_ALIAS_2 "x-box"
+#define PS_ALIAS_1   "playstation"
+#define PS_ALIAS_2   "sony"
 
 
 #define RAYGUI_IMPLEMENTATION
@@ -80,6 +86,11 @@ int main(void)
     // settings box
     bool showSettings = false;
 
+    // gamepad
+    int gamepad = 0;
+    bool rightShoulder = false;
+    bool leftShoulder = false;
+
     while (!WindowShouldClose()) {
         if (IsKeyPressed(KEY_F11)) ToggleBorderlessWindowed();
         //list coordinates
@@ -106,6 +117,15 @@ int main(void)
         BeginDrawing();
         ClearBackground(RAYWHITE);
 
+        if (IsGamepadAvailable(gamepad)) {
+            if (IsGamepadButtonPressed(gamepad, GAMEPAD_BUTTON_RIGHT_TRIGGER_1)) {
+                rightShoulder = true;
+            }
+            if (IsGamepadButtonPressed(gamepad, GAMEPAD_BUTTON_LEFT_TRIGGER_1)) {
+                leftShoulder = true;
+            }
+        }
+
         // the timer
         GuiSetStyle(DEFAULT, TEXT_SIZE, 125);
         GuiLabel((Rectangle){ 0, 50, (float)GetScreenWidth(), 125 }, 
@@ -125,7 +145,11 @@ int main(void)
         GuiSetIconScale(1);
 
         // the start button
-        if (GuiButton(startB, "Start") && !timerStarted) {
+        if ((GuiButton(startB, "Start") || rightShoulder) && !timerStarted) {
+            if (rightShoulder) {
+                SetGamepadVibration(gamepad, 0.0f, 0.75f, 0.5f);
+                rightShoulder = false;
+            }
             timerStarted = true;
             if (!stopped) start_timer(&timer, GetTime());
             else {
@@ -134,7 +158,8 @@ int main(void)
             }
         }
         // lap button. Name and school stay blank until a bib is entered for this row.
-        if (GuiButton(lapB, "Lap") && timerStarted && lap_count < MAX_RUNNER) {
+        if ((GuiButton(lapB, "Lap") ||rightShoulder) && timerStarted && lap_count < MAX_RUNNER) {
+            if (rightShoulder) SetGamepadVibration(gamepad, 0.5f, 0.5f, 0.25f);
             Student none = {0};
             lap_times[lap_count] = time;
             write_row(&lap_times[lap_count], &none, lap_text[lap_count], 256, lap_count);
@@ -150,7 +175,11 @@ int main(void)
         }
 
         // stop button
-        if (GuiButton(stopB, "Stop") && timerStarted) {
+        if ((GuiButton(stopB, "Stop") || leftShoulder) && timerStarted) {
+            if (leftShoulder) {
+                SetGamepadVibration(gamepad, 0.75f, 0.0f, 0.5f);
+                leftShoulder = false;
+            }
             stopped = true;
             pause_timer(&timer, GetTime());
             timerStarted = false;
@@ -265,6 +294,8 @@ int main(void)
         }
         // read the time after every frame
         if (timerStarted) read_time(&timer, &time, GetTime());
+        rightShoulder = false;
+        leftShoulder = false;
         EndDrawing();
     }
 

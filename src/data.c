@@ -187,3 +187,14 @@ const char *division_name(int division) {
     if (division == 3) return "MS";
     return "Varsity";
 }
+
+void floatToStr(float input, char *output, int size){
+    snprintf(output, size, "%.1f", input);
+}
+
+// same order as the wind dropdown: N;S;W;E;NE;NW;SE;SW
+void windToStr(int input, char *output, int size){
+    const char *names[] = {"N", "S", "W", "E", "NE", "NW", "SE", "SW"};
+    if (input < 0 || input > 7) input = 0;
+    snprintf(output, size, "%s", names[input]);
+}

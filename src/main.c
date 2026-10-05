@@ -81,10 +81,19 @@ int main(void)
     static bool divisionEdit = false;
 
     // edit mode checkbox
-    bool edit_mode = false;
+    static bool edit_mode = false;
     
     // settings box
-    bool showSettings = false;
+    static bool showSettings = false;
+
+    static Climate climate = {"", "N", "", 0};
+    static float temp = 0.0;
+    static float precep = 0.0;
+    static bool tempEdit = false;
+    static bool windEdit = false;
+    static int windChoice = 0;
+    static bool cloudEdit = false;
+    static bool precepEdit = false;
 
     // gamepad
     int gamepad = 0;
@@ -309,12 +318,43 @@ int main(void)
             float panelW = GetScreenWidth() * 0.7071f;
             float panelH = GetScreenHeight() * 0.7071f;
             Rectangle panel = {(GetScreenWidth()-panelW)/2.0f, (GetScreenHeight()-panelH)/2.0f, panelW, panelH};
+
+            float tempLabelW = GuiGetTextWidth("Enter Temperature (F)") + 2;
+            float windLabelW = GuiGetTextWidth("Enter Wind Direction") + 4;
+            float precepLabelW = GuiGetTextWidth("Enter Rainfall (inches)") + 2;
+            float cloudLabelW = GuiGetTextWidth("Enter Cloud Level (1-10)") + 2;
+
+            // the widest label decides where the box column starts
+            float labelW = tempLabelW;
+            if (windLabelW > labelW) labelW = windLabelW;
+            if (precepLabelW > labelW) labelW = precepLabelW;
+            if (cloudLabelW > labelW) labelW = cloudLabelW;
+            float boxX = panel.x + gap + labelW;
+            float rowY = panel.y + RAYGUI_WINDOWBOX_STATUSBAR_HEIGHT + gap;
+            float rowStep = 40 + gap;
+            Rectangle tempBox = {boxX, rowY, 160, 40};
+            Rectangle windBox = {boxX, rowY + rowStep, 160, 40};
+            Rectangle windLabel = {windBox.x - windLabelW, windBox.y, windLabelW, 40};
+            Rectangle precepBox = {boxX, rowY + 2*rowStep, 160, 40};
+            Rectangle cloudBox = {boxX, rowY + 3*rowStep, 160, 40};
             if (GuiWindowBox(panel, "Settings")) showSettings = false;
 
-              // (the content area starts at panel.y + RAYGUI_WINDOWBOX_STATUSBAR_HEIGHT)
-            //
-            Rectangle closeB = {panel.x + panel.width-140, panel.y+panel.height-60, 120, 40};
-            if (GuiButton(closeB, "Close")) showSettings = false;
+            if (GuiValueBoxFloat(tempBox, "Enter Temperature (F)", climate.tempreture, &temp, tempEdit)) {
+                if (tempEdit) floatToStr(temp, climate.tempreture, sizeof(climate.tempreture));
+                tempEdit = !tempEdit;
+            }
+            GuiLabel(windLabel, "Enter Wind Direction");
+            if(GuiDropdownBox(windBox,"N;S;W;E;NE;NW;SE;SW",&windChoice, windEdit)) {
+                windToStr(windChoice, climate.wind, sizeof(climate.wind));
+                windEdit = !windEdit;
+            }
+            if (GuiValueBoxFloat(precepBox, "Enter Rainfall (inches)", climate.precipitation, &precep, precepEdit)) {
+                    if (precepEdit) floatToStr(precep, climate.precipitation, sizeof(climate.precipitation));
+                    precepEdit = !precepEdit;
+            }
+            if (GuiValueBox(cloudBox, "Enter Cloud Level (1-10)", &climate.clouds, 1, 10, cloudEdit)) {
+                cloudEdit = !cloudEdit;
+            }
         }
         // read the time after every frame
         if (timerStarted) read_time(&timer, &time, GetTime());

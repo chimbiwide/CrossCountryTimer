@@ -5,7 +5,8 @@
 #include <timer.h>
 
 #define DIV_COUNT 4
-#define MAX_RUNNER 200
+#define MAX_RUNNER 512
+#define MAX_SCHOOLS 256
 
 typedef struct {
     int rank;
@@ -31,6 +32,13 @@ typedef struct {
     char school[20];
 } Student;
 
+typedef struct {
+    char name[20];
+    int runners;
+} School;
+
 int read_lookup(xlsxioreader reader, const char *sheetname, Student index[], int capacity);
+
+int read_schools(xlsxioreader reader, const char *sheetname, School list[], int capacity);
 
 #endif

@@ -231,6 +231,28 @@ int main(void)
         GuiToggle(editBox, editLabel, &edit_mode);
         if (divisionEdit) GuiUnlock();
 
+        if (IsKeyPressed(KEY_DELETE) && edit_mode && active >= 0 && active < lap_count) {
+            int currentActive = active;
+            for (int i = currentActive; i < lap_count-1; i++) {
+                lap_times[i] = lap_times[i+1];
+                students[i] = students[i+1];
+            }
+            lap_count--;
+            students[lap_count] = (Student){0};
+            for (int i = currentActive; i < lap_count; i++) {
+                write_row(&lap_times[i], &students[i], lap_text[i], 256, i);
+            }
+            if (currentActive < currentIndex) currentIndex--;
+            active = -1;
+
+            int row = GuiGetStyle(LISTVIEW, LIST_ITEMS_HEIGHT) + GuiGetStyle(LISTVIEW, LIST_ITEMS_SPACING);
+            int visible =(int)listH / row;
+            if (visible < 1) visible = 1;
+            int maxScroll = lap_count -visible;
+            if (maxScroll < 0) maxScroll = 0;
+            if (scroll > maxScroll) scroll = maxScroll;
+        }
+
 
         // Drawn last so the open menu stays above the bib box and the lap list.
         int divisionW = GuiGetTextWidth("Middle School") + 62;
@@ -284,7 +306,6 @@ int main(void)
             GuiUnlock();
             DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(BLACK, 0.4f));
 
-            // 1/sqrt(2) of each side, so the panel covers half the screen's area
             float panelW = GetScreenWidth() * 0.7071f;
             float panelH = GetScreenHeight() * 0.7071f;
             Rectangle panel = {(GetScreenWidth()-panelW)/2.0f, (GetScreenHeight()-panelH)/2.0f, panelW, panelH};

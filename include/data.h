@@ -3,9 +3,11 @@
 
 #include <xlsx.h>
 
+#define CLIMATE_UNKNOWN "unknown"
+
 typedef struct {
     char tempreture[33];
-    char wind[3];
+    int wind;
     char precipitation[50];
     int clouds;
 } Climate;
@@ -20,6 +22,7 @@ void score_teams(Row complete[], int row_count, Result results[]);
 int get_division_rows(Row complete[], int row_count, int division, Row division_rows[]);
 const char *division_name(int division);
 void floatToStr(float input, char *output, int size);
-void windToStr(int input, char *output, int size);
+void beginClimateEdit(char *text, int size);
+void endClimateEdit(float value, char *text, int size);
 
 #endif

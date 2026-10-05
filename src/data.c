@@ -192,9 +192,13 @@ void floatToStr(float input, char *output, int size){
     snprintf(output, size, "%.1f", input);
 }
 
-// same order as the wind dropdown: N;S;W;E;NE;NW;SE;SW
-void windToStr(int input, char *output, int size){
-    const char *names[] = {"N", "S", "W", "E", "NE", "NW", "SE", "SW"};
-    if (input < 0 || input > 7) input = 0;
-    snprintf(output, size, "%s", names[input]);
+void beginClimateEdit(char *text, int size){
+    if (strcmp(text, CLIMATE_UNKNOWN) == 0) memset(text, 0, size);
+}
+
+void endClimateEdit(float value, char *text, int size){
+    int typed = text[0] != '\0';
+    memset(text, 0, size);
+    if (typed) floatToStr(value, text, size);
+    else snprintf(text, size, "%s", CLIMATE_UNKNOWN);
 }

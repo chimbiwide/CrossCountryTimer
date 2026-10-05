@@ -21,6 +21,21 @@
 
 #define CAPACITY 2048
 
+// Value box for a Climate number that is -1 until it is entered. GuiValueBox
+// prints the number itself and clamps it to minValue while it is not being
+// edited, which would turn the -1 into a reading. An unset value is drawn as
+// a box that says unknown instead, and clicking it starts the edit at 0.
+static int GuiValueBoxUnset(Rectangle bounds, const char *text, int *value, int minValue, int maxValue, bool editMode)
+{
+    if (*value >= 0 || editMode) return GuiValueBox(bounds, text, value, minValue, maxValue, editMode);
+
+    char unknown[] = CLIMATE_UNKNOWN;
+    float unused = 0.0f;
+    int result = GuiValueBoxFloat(bounds, text, unknown, &unused, false);
+    if (result) *value = 0;
+    return result;
+}
+
 int main(void)
 {
     // initialization
@@ -86,12 +101,11 @@ int main(void)
     // settings box
     static bool showSettings = false;
 
-    static Climate climate = {"", "N", "", 0};
+    static Climate climate = {CLIMATE_UNKNOWN, -1, CLIMATE_UNKNOWN, -1};
     static float temp = 0.0;
     static float precep = 0.0;
     static bool tempEdit = false;
     static bool windEdit = false;
-    static int windChoice = 0;
     static bool cloudEdit = false;
     static bool precepEdit = false;
 
@@ -240,7 +254,7 @@ int main(void)
         GuiToggle(editBox, editLabel, &edit_mode);
         if (divisionEdit) GuiUnlock();
 
-        if (IsKeyPressed(KEY_DELETE) && edit_mode && active >= 0 && active < lap_count) {
+        if (IsKeyPressed(KEY_DELETE) && edit_mode && active >= 0 && active < lap_count && !showSettings) {
             int currentActive = active;
             for (int i = currentActive; i < lap_count-1; i++) {
                 lap_times[i] = lap_times[i+1];
@@ -320,9 +334,9 @@ int main(void)
             Rectangle panel = {(GetScreenWidth()-panelW)/2.0f, (GetScreenHeight()-panelH)/2.0f, panelW, panelH};
 
             float tempLabelW = GuiGetTextWidth("Enter Temperature (F)") + 2;
-            float windLabelW = GuiGetTextWidth("Enter Wind Direction") + 4;
+            float windLabelW = GuiGetTextWidth("Enter Wind Speed (mph)") + 2;
             float precepLabelW = GuiGetTextWidth("Enter Rainfall (inches)") + 2;
-            float cloudLabelW = GuiGetTextWidth("Enter Cloud Level (1-10)") + 2;
+            float cloudLabelW = GuiGetTextWidth("Enter Cloud Level (0-10)") + 2;
 
             // the widest label decides where the box column starts
             float labelW = tempLabelW;
@@ -334,25 +348,24 @@ int main(void)
             float rowStep = 40 + gap;
             Rectangle tempBox = {boxX, rowY, 160, 40};
             Rectangle windBox = {boxX, rowY + rowStep, 160, 40};
-            Rectangle windLabel = {windBox.x - windLabelW, windBox.y, windLabelW, 40};
             Rectangle precepBox = {boxX, rowY + 2*rowStep, 160, 40};
             Rectangle cloudBox = {boxX, rowY + 3*rowStep, 160, 40};
             if (GuiWindowBox(panel, "Settings")) showSettings = false;
 
             if (GuiValueBoxFloat(tempBox, "Enter Temperature (F)", climate.tempreture, &temp, tempEdit)) {
-                if (tempEdit) floatToStr(temp, climate.tempreture, sizeof(climate.tempreture));
+                if (tempEdit) endClimateEdit(temp, climate.tempreture, sizeof(climate.tempreture));
+                else beginClimateEdit(climate.tempreture, sizeof(climate.tempreture));
                 tempEdit = !tempEdit;
             }
-            GuiLabel(windLabel, "Enter Wind Direction");
-            if(GuiDropdownBox(windBox,"N;S;W;E;NE;NW;SE;SW",&windChoice, windEdit)) {
-                windToStr(windChoice, climate.wind, sizeof(climate.wind));
+            if (GuiValueBoxUnset(windBox, "Enter Wind Speed (mph)", &climate.wind, 0, 99, windEdit)) {
                 windEdit = !windEdit;
             }
             if (GuiValueBoxFloat(precepBox, "Enter Rainfall (inches)", climate.precipitation, &precep, precepEdit)) {
-                    if (precepEdit) floatToStr(precep, climate.precipitation, sizeof(climate.precipitation));
-                    precepEdit = !precepEdit;
+                if (precepEdit) endClimateEdit(precep, climate.precipitation, sizeof(climate.precipitation));
+                else beginClimateEdit(climate.precipitation, sizeof(climate.precipitation));
+                precepEdit = !precepEdit;
             }
-            if (GuiValueBox(cloudBox, "Enter Cloud Level (1-10)", &climate.clouds, 1, 10, cloudEdit)) {
+            if (GuiValueBoxUnset(cloudBox, "Enter Cloud Level (0-10)", &climate.clouds, 0, 10, cloudEdit)) {
                 cloudEdit = !cloudEdit;
             }
         }

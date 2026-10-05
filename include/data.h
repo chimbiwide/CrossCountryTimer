@@ -24,5 +24,7 @@ const char *division_name(int division);
 void floatToStr(float input, char *output, int size);
 void beginClimateEdit(char *text, int size);
 void endClimateEdit(float value, char *text, int size);
+int search_school(School schools[], int length, const char *name);
+int sync_school(Row stats[], int row_count, School schools[]);
 
 #endif

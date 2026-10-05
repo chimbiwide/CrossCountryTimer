@@ -21,10 +21,6 @@
 
 #define CAPACITY 2048
 
-// Value box for a Climate number that is -1 until it is entered. GuiValueBox
-// prints the number itself and clamps it to minValue while it is not being
-// edited, which would turn the -1 into a reading. An unset value is drawn as
-// a box that says unknown instead, and clicking it starts the edit at 0.
 static int GuiValueBoxUnset(Rectangle bounds, const char *text, int *value, int minValue, int maxValue, bool editMode)
 {
     if (*value >= 0 || editMode) return GuiValueBox(bounds, text, value, minValue, maxValue, editMode);
@@ -71,6 +67,7 @@ int main(void)
 
     static Time lap_times[MAX_RUNNER];
     static Student students[MAX_RUNNER];
+    static School schools[MAX_SCHOOLS] = {0};
     static Row rows[MAX_RUNNER] = {0};
 
     // student index
@@ -290,6 +287,7 @@ int main(void)
         if (GuiButton(pdfB, "Export to PDF") && !timerStarted) {
             if (lap_count > 0) {
                 sync_row(rows, lap_times, students, lap_count);
+                int school_count = sync_school(rows, lap_count, schools);
 
                 Result results[DIV_COUNT] = {0};
                 score_teams(rows, lap_count, results);

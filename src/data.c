@@ -202,3 +202,29 @@ void endClimateEdit(float value, char *text, int size){
     if (typed) floatToStr(value, text, size);
     else snprintf(text, size, "%s", CLIMATE_UNKNOWN);
 }
+
+int search_school(School schools[], int length, const char *name) {
+    for (int i = 0; i < length; i++) {
+        if (strcmp(name, schools[i].name) == 0) return i;
+    }
+    return -1;
+}
+
+int sync_school(Row stats[], int row_count, School schools[]){
+    int school_count = 0;
+    for (int i = 0; i < row_count; i++) {
+        if (stats[i].school[0] == '\0') continue;
+
+        int found = search_school(schools, school_count, stats[i].school);
+        if (found >= 0) {
+            schools[found].runners++;
+        }
+        else if (school_count < MAX_SCHOOLS) {
+            snprintf(schools[school_count].name, sizeof(schools[school_count].name),
+                     "%s", stats[i].school);
+            schools[school_count].runners = 1;
+            school_count++;
+        }
+    }
+    return school_count;
+}

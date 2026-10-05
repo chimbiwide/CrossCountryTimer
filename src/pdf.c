@@ -24,10 +24,44 @@ static void draw_header(struct pdf_doc *pdf, struct pdf_object *page,
     pdf_set_font(pdf, "Helvetica");
 }
 
+// small weather table, titles over values. Two 14pt rows are as tall as the
+// title line, so it sits beside the title and stays above the summary text.
+// The writers leave 6pt more under it so a long summary line is not crowded.
+static void draw_climate(struct pdf_doc *pdf, struct pdf_object *page,
+                         const Climate *climate, float right, float top)
+{
+    const char *titles[4] = {"Temperature (F)", "Wind Dir", "Rainfall (in)", "Cloud Level (1-10)"};
+    float col_w[4] = {84, 50, 64, 96};
+    float col_x[4];
+    col_x[0] = right - (col_w[0] + col_w[1] + col_w[2] + col_w[3]);
+    for (int c = 1; c < 4; c++) {
+        col_x[c] = col_x[c - 1] + col_w[c - 1];
+    }
+
+    // clouds is 0 until the settings panel is first opened, leave the cell empty then
+    char clouds_text[16] = "";
+    if (climate->clouds > 0) {
+        snprintf(clouds_text, sizeof(clouds_text), "%d", climate->clouds);
+    }
+    const char *values[4] = {climate->tempreture, climate->wind,
+                             climate->precipitation, clouds_text};
+
+    pdf_set_font(pdf, "Helvetica-Bold");
+    for (int c = 0; c < 4; c++) {
+        draw_cell(pdf, page, col_x[c], top - 14, col_w[c], 14,
+                  titles[c], PDF_RGB(220, 220, 220));
+    }
+    pdf_set_font(pdf, "Helvetica");
+    for (int c = 0; c < 4; c++) {
+        draw_cell(pdf, page, col_x[c], top - 28, col_w[c], 14,
+                  values[c], PDF_WHITE);
+    }
+}
+
 int write_division_pdf(const char *path, Row rows[], int row_count,
                        const char *winner, int winner_score,
                        const char *loser, int loser_score,
-                       const char *division)
+                       const char *division, const Climate *climate)
 {
     struct pdf_info info = {
         .creator = "chimbiwide",
@@ -62,7 +96,8 @@ int write_division_pdf(const char *path, Row rows[], int row_count,
     snprintf(title, sizeof(title), "%s Results", division);
     pdf_set_font(pdf, "Helvetica-Bold");
     pdf_add_text(pdf, page, title, 16, 36, y - 16, PDF_BLACK);
-    y = y - 28;
+    draw_climate(pdf, page, climate, col_x[5] + col_w[5], y);
+    y = y - 34;
 
     char summary[128];
     if (winner[0] == '\0') {
@@ -120,7 +155,8 @@ int write_division_pdf(const char *path, Row rows[], int row_count,
     return saved;
 }
 
-int write_results_pdf(const char *path, Row rows[], int row_count, Result results[]) {
+int write_results_pdf(const char *path, Row rows[], int row_count, Result results[],
+                      const Climate *climate) {
     struct pdf_info info = {
         .creator = "chimbiwide",
         .producer = "SJ",
@@ -152,7 +188,8 @@ int write_results_pdf(const char *path, Row rows[], int row_count, Result result
 
     pdf_set_font(pdf, "Helvetica-Bold");
     pdf_add_text(pdf, page, "Meet Results", 16, 36, y - 16, PDF_BLACK);
-    y = y - 28;
+    draw_climate(pdf, page, climate, col_x[5] + col_w[5], y);
+    y = y - 34;
 
     // one summary line for each division that ran
     char summary[128];

@@ -281,7 +281,7 @@ int main(void)
                 score_teams(rows, lap_count, results);
 
                 // master list: every runner, overall places
-                if (write_results_pdf("results.pdf", rows, lap_count, results) < 0) {
+                if (write_results_pdf("results.pdf", rows, lap_count, results, &climate) < 0) {
                     printf("PDF SAVE FAILED: results.pdf\n");
                 }
 
@@ -303,7 +303,7 @@ int main(void)
                                            results[div_slot].winnerScore,
                                            results[div_slot].loser,
                                            results[div_slot].loserScore,
-                                           division_name(div_slot)) < 0) {
+                                           division_name(div_slot), &climate) < 0) {
                         printf("PDF SAVE FAILED: %s\n", path);
                     }
                 }

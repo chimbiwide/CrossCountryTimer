@@ -58,9 +58,71 @@ static void draw_climate(struct pdf_doc *pdf, struct pdf_object *page,
     }
 }
 
+// width of the widest school name, so the standings columns line up
+static float school_name_width(struct pdf_doc *pdf, const Result *result)
+{
+    float widest = 0;
+    for (int s = 0; s < result->school_count; s++) {
+        float width = 0;
+        pdf_get_font_text_width(pdf, "Helvetica", result->schools[s].name, 12, &width);
+        if (width > widest) widest = width;
+    }
+    return widest;
+}
+
+static float draw_standings(struct pdf_doc *pdf, struct pdf_object **page,
+                            const Result *result, const char *heading,
+                            float x, float school_w, float y, float page_h)
+{
+    float school_x = x + 64;
+    float score_x = school_x + school_w + 16;
+    float places_x = score_x + 40;
+
+    for (int s = 0; s < result->school_count; s++) {
+        const School *school = &result->schools[s];
+
+        if (y - 18 < 36) {
+            *page = pdf_append_page(pdf);
+            if (*page == NULL) return -1;
+            y = page_h - 36;
+        }
+
+        if (s == 0 && heading != NULL) {
+            pdf_set_font(pdf, "Helvetica-Bold");
+            pdf_add_text(pdf, *page, heading, 12, 36, y - 12, PDF_BLACK);
+        }
+
+        const char *label = "Finisher:";
+        if (s == 0) label = "Winner:";
+
+        char score_text[16] = "";
+        char places_text[64];
+        if (school->runners < 5) {
+            label = "No score:";
+            snprintf(places_text, sizeof(places_text), "only %d finished, 5 needed",
+                     school->runners);
+        } else {
+            snprintf(score_text, sizeof(score_text), "%d", school->score);
+            snprintf(places_text, sizeof(places_text), "%d + %d + %d + %d + %d",
+                     school->cumulative[0], school->cumulative[1], school->cumulative[2],
+                     school->cumulative[3], school->cumulative[4]);
+        }
+
+        pdf_set_font(pdf, "Helvetica");
+        pdf_add_text(pdf, *page, label, 12, x, y - 12, PDF_BLACK);
+        pdf_add_text(pdf, *page, school->name, 12, school_x, y - 12, PDF_BLACK);
+        pdf_add_text(pdf, *page, places_text, 12, places_x, y - 12, PDF_BLACK);
+        pdf_set_font(pdf, "Helvetica-Bold");
+        pdf_add_text(pdf, *page, score_text, 12, score_x, y - 12, PDF_BLACK);
+
+        y = y - 18;
+    }
+    pdf_set_font(pdf, "Helvetica");
+    return y;
+}
+
 int write_division_pdf(const char *path, Row rows[], int row_count,
-                       const char *winner, int winner_score,
-                       const char *loser, int loser_score,
+                       const Result *result,
                        const char *division, const Climate *climate)
 {
     struct pdf_info info = {
@@ -99,17 +161,23 @@ int write_division_pdf(const char *path, Row rows[], int row_count,
     draw_climate(pdf, page, climate, col_x[5] + col_w[5], y);
     y = y - 34;
 
-    char summary[128];
-    if (winner[0] == '\0') {
-        snprintf(summary, sizeof(summary), "No team score");
-    } else {
-        snprintf(summary, sizeof(summary),
-                 "Win: %s    %d        Finish: %s    %d",
-                 winner, winner_score, loser, loser_score);
+    y = draw_standings(pdf, &page, result, NULL, 36,
+                       school_name_width(pdf, result), y, page_h);
+    if (y < 0) {
+        pdf_destroy(pdf);
+        return -1;
     }
-    pdf_set_font(pdf, "Helvetica");
-    pdf_add_text(pdf, page, summary, 12, 36, y - 12, PDF_BLACK);
-    y = y - 28;
+    y = y - 10;
+
+    // the table header and its first row have to fit under the standings
+    if (y - 36 < 36) {
+        page = pdf_append_page(pdf);
+        if (page == NULL) {
+            pdf_destroy(pdf);
+            return -1;
+        }
+        y = page_h - 36;
+    }
 
     draw_header(pdf, page, col_x, col_w, y - 18);
     y = y - 18;
@@ -191,26 +259,36 @@ int write_results_pdf(const char *path, Row rows[], int row_count, Result result
     draw_climate(pdf, page, climate, col_x[5] + col_w[5], y);
     y = y - 34;
 
-    // one summary line for each division that ran
-    char summary[128];
-    pdf_set_font(pdf, "Helvetica");
+    // the same school column width for every division, so they all line up
+    float school_w = 0;
+    for (int division = 0; division < DIV_COUNT; division++) {
+        float width = school_name_width(pdf, &results[division]);
+        if (width > school_w) school_w = width;
+    }
+
+    // the standings of each division that ran, with its name beside them
     for (int division = 0; division < DIV_COUNT; division++) {
         if (results[division].division[0] == '\0') continue;
 
-        if (results[division].winner[0] == '\0') {
-            snprintf(summary, sizeof(summary), "%s    no team score",
-                     division_name(division));
-        } else {
-            snprintf(summary, sizeof(summary),
-                     "%s    Win: %s    %d        Finish: %s    %d",
-                     division_name(division),
-                     results[division].winner, results[division].winnerScore,
-                     results[division].loser, results[division].loserScore);
+        y = draw_standings(pdf, &page, &results[division], division_name(division),
+                           36 + 72, school_w, y, page_h);
+        if (y < 0) {
+            pdf_destroy(pdf);
+            return -1;
         }
-        pdf_add_text(pdf, page, summary, 12, 36, y - 12, PDF_BLACK);
-        y = y - 18;
+        y = y - 6;
     }
-    y = y - 10;
+    y = y - 4;
+
+    // the table header and its first row have to fit under the standings
+    if (y - 36 < 36) {
+        page = pdf_append_page(pdf);
+        if (page == NULL) {
+            pdf_destroy(pdf);
+            return -1;
+        }
+        y = page_h - 36;
+    }
 
     draw_header(pdf, page, col_x, col_w, y - 18);
     y = y - 18;

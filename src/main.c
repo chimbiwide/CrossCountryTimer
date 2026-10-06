@@ -68,7 +68,6 @@ int main(void)
 
     static Time lap_times[MAX_RUNNER];
     static Student students[MAX_RUNNER];
-    static School schools[MAX_SCHOOLS] = {0};
     static Row rows[MAX_RUNNER] = {0};
 
     // student index
@@ -290,12 +289,10 @@ int main(void)
         if (GuiButton(pdfB, "Export to PDF") && !timerStarted) {
             if (lap_count > 0) {
                 sync_row(rows, lap_times, students, lap_count);
-                int school_count = sync_school(rows, lap_count, schools);
 
                 Result results[DIV_COUNT] = {0};
                 score_teams(rows, lap_count, results);
 
-                // master list: every runner, overall places
                 if (write_results_pdf("results.pdf", rows, lap_count, results, &climate) < 0) {
                     printf("PDF SAVE FAILED: results.pdf\n");
                 }
@@ -314,10 +311,7 @@ int main(void)
 
                     if (write_division_pdf(path, division_rows,
                                            division_row_count,
-                                           results[div_slot].winner,
-                                           results[div_slot].winnerScore,
-                                           results[div_slot].loser,
-                                           results[div_slot].loserScore,
+                                           &results[div_slot],
                                            division_name(div_slot), &climate) < 0) {
                         printf("PDF SAVE FAILED: %s\n", path);
                     }

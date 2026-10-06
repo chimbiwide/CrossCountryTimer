@@ -8,8 +8,7 @@
 int write_results_pdf(const char *path, Row rows[], int row_count, Result results[],
                       const Climate *climate);
 int write_division_pdf(const char *path, Row rows[], int row_count,
-                       const char *winner, int winner_score,
-                       const char *loser, int loser_score,
+                       const Result *result,
                        const char *division, const Climate *climate);
 
 #endif

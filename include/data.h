@@ -28,5 +28,6 @@ void beginClimateEdit(char *text, int size);
 void endClimateEdit(float value, char *text, int size);
 int search_school(School schools[], int length, const char *name);
 int sync_school(Row stats[], int row_count, School schools[]);
+void sort_schools(School schools[], int school_count);
 
 #endif

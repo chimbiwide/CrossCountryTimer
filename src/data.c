@@ -48,7 +48,7 @@ void write_row(const Time *time, const Student *student, char *buffer, int buff_
     }
 }
 
-// this is a preliminary design, needs a adjustable number later
+// DEPRECATED
 void calcuate_score(Row stats[], int row_count, char *winner, int *winner_score, char *loser, int *loser_score){
     char *school1 = stats[0].school;
     int school1_count = 0;
@@ -170,14 +170,63 @@ void score_teams(Row complete[], int row_count, Result results[]) {
         int division_row_count = get_division_rows(complete, row_count, division, division_rows);
         if (division_row_count == 0) continue;
 
+        results[division].school_count = sync_school(division_rows, division_row_count, results[division].schools);
+
         snprintf(results[division].division,
                  sizeof(results[division].division),
                  "%s", division_rows[0].division);
-        calcuate_score(division_rows, division_row_count,
-                       results[division].winner,
-                       &results[division].winnerScore,
-                       results[division].loser,
-                       &results[division].loserScore);
+
+        int place = 1;
+        for (int j = 0; j < division_row_count; j++) {
+            int found = search_school(results[division].schools, 
+                                      results[division].school_count,
+                                      division_rows[j].school);
+            if (found < 0) continue;
+            School *school = &results[division].schools[found];
+            
+            if (school->runners < 5) continue;
+            if (school->placed >= 7) continue;
+
+            if (school->placed < 5) {
+                school->score += place;
+                school->cumulative[school->placed] = place;
+            }
+            else if (school->placed == 5) {
+                school->sixth = place;
+                school->cumulative[5] = place;
+            }
+            school->placed++;
+            place++;
+        }
+
+        sort_schools(results[division].schools, results[division].school_count);
+    }
+}
+
+static int school_beats(const School *a, const School *b) {
+    int a_full = a->runners >= 5;
+    int b_full = b->runners >= 5;
+
+    if (a_full != b_full) return a_full;
+    if (!a_full) return 0;
+
+    if (a->score != b->score) return a->score < b->score;
+
+    if (a->sixth == 0) return 0;
+    if (b->sixth == 0) return 1;
+    return a->sixth < b->sixth;
+}
+
+
+void sort_schools(School schools[], int school_count) {
+    for (int i = 0; i < school_count; i++) {
+        int best = i;
+        for (int j = i + 1; j < school_count; j++) {
+            if (school_beats(&schools[j], &schools[best])) best = j;
+        }
+        School temp = schools[i];
+        schools[i] = schools[best];
+        schools[best] = temp;
     }
 }
 
@@ -241,3 +290,5 @@ int sync_school(Row stats[], int row_count, School schools[]){
     }
     return school_count;
 }
+
+

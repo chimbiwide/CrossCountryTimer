@@ -18,11 +18,18 @@ typedef struct {
 } Row;
 
 typedef struct {
+    char name[20];
+    int cumulative[6];
+    int runners;
+    int placed;
+    int score;
+    int sixth;
+} School;
+
+typedef struct {
     char division[4];
-    char winner[20];
-    int winnerScore;
-    char loser[20];
-    int loserScore;
+    School schools[MAX_SCHOOLS];
+    int school_count;
 } Result;
 
 typedef struct {
@@ -32,10 +39,6 @@ typedef struct {
     char school[20];
 } Student;
 
-typedef struct {
-    char name[20];
-    int runners;
-} School;
 
 int read_lookup(xlsxioreader reader, const char *sheetname, Student index[], int capacity);
 

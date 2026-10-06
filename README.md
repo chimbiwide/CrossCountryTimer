@@ -116,3 +116,14 @@ cmake --build build
 - Middleman
 
 New column for divsion: F, V, J, M
+
+---
+
+### TODO
+
+1. Wind direction (N,S,W,E...)
+2. Make wind a textbok (15G20)
+3. Scrolling function broken on windows
+4. Scoring teams (vertical team scoring + horizonal scoreing)
+5. infitine teams
+6. record loading

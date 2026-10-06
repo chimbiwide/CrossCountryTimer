@@ -99,7 +99,7 @@ int main(void)
     // settings box
     static bool showSettings = false;
 
-    static Climate climate = {CLIMATE_UNKNOWN, CLIMATE_UNKNOWN, "UND", CLIMATE_UNKNOWN, -1};
+    static Climate climate = {CLIMATE_UNKNOWN, CLIMATE_UNKNOWN, CLIMATE_UNKNOWN, CLIMATE_UNKNOWN, -1};
     static float temp = 0.0;
     static float precep = 0.0;
     static int windDirection = 0;
@@ -389,6 +389,7 @@ int main(void)
 
             if (directionEdit) GuiUnlock();
             if (GuiDropdownBox(directionBox, "N;S;W;E;NW;NE;SW;SE", &windDirection, directionEdit)) {
+                snprintf(climate.windDirection, sizeof(climate.windDirection), "%s", wind_direction(windDirection));
                 directionEdit = !directionEdit;
             }
         }

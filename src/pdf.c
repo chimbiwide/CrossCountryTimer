@@ -27,33 +27,32 @@ static void draw_header(struct pdf_doc *pdf, struct pdf_object *page,
 static void draw_climate(struct pdf_doc *pdf, struct pdf_object *page,
                          const Climate *climate, float right, float top)
 {
-    const char *titles[4] = {"Temperature (F)", "Wind (mph)", "Rainfall (in)", "Cloud Level (0-10)"};
-    float col_w[4] = {84, 64, 64, 96};
-    float col_x[4];
-    col_x[0] = right - (col_w[0] + col_w[1] + col_w[2] + col_w[3]);
-    for (int c = 1; c < 4; c++) {
+    const char *titles[5] = {"Temperature (F)", "Wind (mph)", "Wind Direction",
+                             "Rainfall (in)", "Cloud Level (0-10)"};
+    float col_w[5] = {84, 64, 80, 64, 96};
+    float col_x[5];
+    col_x[0] = right - (col_w[0] + col_w[1] + col_w[2] + col_w[3] + col_w[4]);
+    for (int c = 1; c < 5; c++) {
         col_x[c] = col_x[c - 1] + col_w[c - 1];
     }
 
-    // wind and clouds are -1 until they are entered. 0 is a real reading.
+    // clouds is -1 until it is entered. 0 is a real reading.
     char clouds_text[16] = CLIMATE_UNKNOWN;
     if (climate->clouds >= 0) {
         snprintf(clouds_text, sizeof(clouds_text), "%d", climate->clouds);
     }
-    char wind_text[16] = CLIMATE_UNKNOWN;
-    if (climate->wind >= 0) {
-        snprintf(wind_text, sizeof(wind_text), "%s", climate->wind);
-    }
-    const char *values[4] = {climate->tempreture, wind_text,
+    char wind_text[20] = CLIMATE_UNKNOWN;
+    snprintf(wind_text, sizeof(wind_text), "%s", climate->wind);
+    const char *values[5] = {climate->tempreture, wind_text, climate->windDirection,
                              climate->precipitation, clouds_text};
 
     pdf_set_font(pdf, "Helvetica-Bold");
-    for (int c = 0; c < 4; c++) {
+    for (int c = 0; c < 5; c++) {
         draw_cell(pdf, page, col_x[c], top - 14, col_w[c], 14,
                   titles[c], PDF_RGB(220, 220, 220));
     }
     pdf_set_font(pdf, "Helvetica");
-    for (int c = 0; c < 4; c++) {
+    for (int c = 0; c < 5; c++) {
         draw_cell(pdf, page, col_x[c], top - 28, col_w[c], 14,
                   values[c], PDF_WHITE);
     }

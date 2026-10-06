@@ -8,7 +8,7 @@
 typedef struct {
     char tempreture[33];
     char wind[20];
-    char windDirection[5];
+    char windDirection[8];
     char precipitation[50];
     int clouds;
 } Climate;
@@ -22,6 +22,7 @@ int find_division(const char *division_code);
 void score_teams(Row complete[], int row_count, Result results[]);
 int get_division_rows(Row complete[], int row_count, int division, Row division_rows[]);
 const char *division_name(int division);
+const char *wind_direction(int direction);
 void floatToStr(float input, char *output, int size);
 void beginClimateEdit(char *text, int size);
 void endClimateEdit(float value, char *text, int size);

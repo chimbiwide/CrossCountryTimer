@@ -188,6 +188,19 @@ const char *division_name(int division) {
     return "Varsity";
 }
 
+const char *wind_direction(int direction) {
+    switch(direction) {
+        case 1: return "S";
+        case 2: return "W";
+        case 3: return "E";
+        case 4: return "NW";
+        case 5: return "NE";
+        case 6: return "SW";
+        case 7: return "SE";
+        default: return "N";
+    }
+}
+
 void floatToStr(float input, char *output, int size){
     snprintf(output, size, "%.1f", input);
 }

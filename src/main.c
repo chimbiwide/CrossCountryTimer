@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdbool.h>
 #define RAYGUI_WINDOWBOX_STATUSBAR_HEIGHT 44
 #define RAYGUI_WINDOWBOX_CLOSEBUTTON_HEIGHT 30
@@ -98,7 +99,7 @@ int main(void)
     // settings box
     static bool showSettings = false;
 
-    static Climate climate = {CLIMATE_UNKNOWN, -1, CLIMATE_UNKNOWN, -1};
+    static Climate climate = {CLIMATE_UNKNOWN, CLIMATE_UNKNOWN, CLIMATE_UNKNOWN, -1};
     static float temp = 0.0;
     static float precep = 0.0;
     static bool tempEdit = false;
@@ -345,7 +346,9 @@ int main(void)
             float rowY = panel.y + RAYGUI_WINDOWBOX_STATUSBAR_HEIGHT + gap;
             float rowStep = 40 + gap;
             Rectangle tempBox = {boxX, rowY, 160, 40};
-            Rectangle windBox = {boxX, rowY + rowStep, 160, 40};
+            // GuiTextBox draws no label, so this one sits where the value boxes put theirs
+            Rectangle windLabel = {boxX - labelW, rowY + rowStep, labelW + GuiGetStyle(LABEL, BORDER_WIDTH), 40};
+            Rectangle windInputBox = {boxX, rowY + rowStep, 160, 40};
             Rectangle precepBox = {boxX, rowY + 2*rowStep, 160, 40};
             Rectangle cloudBox = {boxX, rowY + 3*rowStep, 160, 40};
             if (GuiWindowBox(panel, "Settings")) showSettings = false;
@@ -355,7 +358,12 @@ int main(void)
                 else beginClimateEdit(climate.tempreture, sizeof(climate.tempreture));
                 tempEdit = !tempEdit;
             }
-            if (GuiValueBoxUnset(windBox, "Enter Wind Speed (mph)", &climate.wind, 0, 99, windEdit)) {
+            GuiSetStyle(LABEL, TEXT_ALIGNMENT, TEXT_ALIGN_RIGHT);
+            GuiLabel(windLabel, "Enter Wind Speed (mph)");
+            GuiSetStyle(LABEL, TEXT_ALIGNMENT, TEXT_ALIGN_CENTER);
+            if (GuiTextBox(windInputBox, climate.wind, sizeof(climate.wind), windEdit)) {
+                if (!windEdit) beginClimateEdit(climate.wind, sizeof(climate.wind));
+                if (windEdit && climate.wind[0] == '\0') snprintf(climate.wind, sizeof(climate.wind), CLIMATE_UNKNOWN);
                 windEdit = !windEdit;
             }
             if (GuiValueBoxFloat(precepBox, "Enter Rainfall (inches)", climate.precipitation, &precep, precepEdit)) {

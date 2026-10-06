@@ -27,8 +27,8 @@ static void draw_header(struct pdf_doc *pdf, struct pdf_object *page,
 static void draw_climate(struct pdf_doc *pdf, struct pdf_object *page,
                          const Climate *climate, float right, float top)
 {
-    const char *titles[4] = {"Temperature (F)", "Wind (mph)", "Rainfall (in)", "Cloud Level (0-10)"};
-    float col_w[4] = {84, 64, 64, 96};
+    const char *titles[4] = {"Temperature (F)", "Wind (mph)", "Rainfall (in)", "Clouds (0-10)"};
+    float col_w[4] = {84, 64, 64, 72};
     float col_x[4];
     col_x[0] = right - (col_w[0] + col_w[1] + col_w[2] + col_w[3]);
     for (int c = 1; c < 4; c++) {
@@ -42,7 +42,7 @@ static void draw_climate(struct pdf_doc *pdf, struct pdf_object *page,
     }
     char wind_text[16] = CLIMATE_UNKNOWN;
     if (climate->wind >= 0) {
-        snprintf(wind_text, sizeof(wind_text), "%d", climate->wind);
+        snprintf(wind_text, sizeof(wind_text), "%s", climate->wind);
     }
     const char *values[4] = {climate->tempreture, wind_text,
                              climate->precipitation, clouds_text};

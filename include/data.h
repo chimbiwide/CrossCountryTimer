@@ -7,7 +7,7 @@
 
 typedef struct {
     char tempreture[33];
-    int wind;
+    char wind[20];
     char precipitation[50];
     int clouds;
 } Climate;

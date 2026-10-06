@@ -28,8 +28,8 @@ static void draw_climate(struct pdf_doc *pdf, struct pdf_object *page,
                          const Climate *climate, float right, float top)
 {
     const char *titles[5] = {"Temperature (F)", "Wind (mph)", "Wind Direction",
-                             "Rainfall (in)", "Cloud Level (0-10)"};
-    float col_w[5] = {84, 64, 80, 64, 96};
+                             "Rainfall (in)", "Clouds (0-10)"};
+    float col_w[5] = {84, 64, 80, 64, 72};
     float col_x[5];
     col_x[0] = right - (col_w[0] + col_w[1] + col_w[2] + col_w[3] + col_w[4]);
     for (int c = 1; c < 5; c++) {

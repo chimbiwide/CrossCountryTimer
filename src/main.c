@@ -99,11 +99,13 @@ int main(void)
     // settings box
     static bool showSettings = false;
 
-    static Climate climate = {CLIMATE_UNKNOWN, CLIMATE_UNKNOWN, CLIMATE_UNKNOWN, -1};
+    static Climate climate = {CLIMATE_UNKNOWN, CLIMATE_UNKNOWN, "UND", CLIMATE_UNKNOWN, -1};
     static float temp = 0.0;
     static float precep = 0.0;
+    static int windDirection = 0;
     static bool tempEdit = false;
     static bool windEdit = false;
+    static bool directionEdit = false;
     static bool cloudEdit = false;
     static bool precepEdit = false;
 
@@ -334,23 +336,29 @@ int main(void)
 
             float tempLabelW = GuiGetTextWidth("Enter Temperature (F)") + 2;
             float windLabelW = GuiGetTextWidth("Enter Wind Speed (mph)") + 2;
+            float directionLabelW = GuiGetTextWidth("Enter Wind Direction") + 2;
             float precepLabelW = GuiGetTextWidth("Enter Rainfall (inches)") + 2;
             float cloudLabelW = GuiGetTextWidth("Enter Cloud Level (0-10)") + 2;
 
             // the widest label decides where the box column starts
             float labelW = tempLabelW;
             if (windLabelW > labelW) labelW = windLabelW;
+            if (directionLabelW > labelW) labelW = directionLabelW;
             if (precepLabelW > labelW) labelW = precepLabelW;
             if (cloudLabelW > labelW) labelW = cloudLabelW;
             float boxX = panel.x + gap + labelW;
             float rowY = panel.y + RAYGUI_WINDOWBOX_STATUSBAR_HEIGHT + gap;
             float rowStep = 40 + gap;
             Rectangle tempBox = {boxX, rowY, 160, 40};
-            // GuiTextBox draws no label, so this one sits where the value boxes put theirs
+            // GuiTextBox and GuiDropdownBox draw no label, so these sit where the value boxes put theirs
             Rectangle windLabel = {boxX - labelW, rowY + rowStep, labelW + GuiGetStyle(LABEL, BORDER_WIDTH), 40};
             Rectangle windInputBox = {boxX, rowY + rowStep, 160, 40};
-            Rectangle precepBox = {boxX, rowY + 2*rowStep, 160, 40};
-            Rectangle cloudBox = {boxX, rowY + 3*rowStep, 160, 40};
+            Rectangle directionLabel = {boxX - labelW, rowY + 2*rowStep, labelW + GuiGetStyle(LABEL, BORDER_WIDTH), 40};
+            Rectangle directionBox = {boxX, rowY + 2*rowStep, 160, 40};
+            Rectangle precepBox = {boxX, rowY + 3*rowStep, 160, 40};
+            Rectangle cloudBox = {boxX, rowY + 4*rowStep, 160, 40};
+            // the open direction list covers the rows below it
+            if (directionEdit) GuiLock();
             if (GuiWindowBox(panel, "Settings")) showSettings = false;
 
             if (GuiValueBoxFloat(tempBox, "Enter Temperature (F)", climate.tempreture, &temp, tempEdit)) {
@@ -358,21 +366,30 @@ int main(void)
                 else beginClimateEdit(climate.tempreture, sizeof(climate.tempreture));
                 tempEdit = !tempEdit;
             }
+
             GuiSetStyle(LABEL, TEXT_ALIGNMENT, TEXT_ALIGN_RIGHT);
             GuiLabel(windLabel, "Enter Wind Speed (mph)");
+            GuiLabel(directionLabel, "Enter Wind Direction");
             GuiSetStyle(LABEL, TEXT_ALIGNMENT, TEXT_ALIGN_CENTER);
             if (GuiTextBox(windInputBox, climate.wind, sizeof(climate.wind), windEdit)) {
                 if (!windEdit) beginClimateEdit(climate.wind, sizeof(climate.wind));
                 if (windEdit && climate.wind[0] == '\0') snprintf(climate.wind, sizeof(climate.wind), CLIMATE_UNKNOWN);
                 windEdit = !windEdit;
             }
+
             if (GuiValueBoxFloat(precepBox, "Enter Rainfall (inches)", climate.precipitation, &precep, precepEdit)) {
                 if (precepEdit) endClimateEdit(precep, climate.precipitation, sizeof(climate.precipitation));
                 else beginClimateEdit(climate.precipitation, sizeof(climate.precipitation));
                 precepEdit = !precepEdit;
             }
+
             if (GuiValueBoxUnset(cloudBox, "Enter Cloud Level (0-10)", &climate.clouds, 0, 10, cloudEdit)) {
                 cloudEdit = !cloudEdit;
+            }
+
+            if (directionEdit) GuiUnlock();
+            if (GuiDropdownBox(directionBox, "N;S;W;E;NW;NE;SW;SE", &windDirection, directionEdit)) {
+                directionEdit = !directionEdit;
             }
         }
         // read the time after every frame

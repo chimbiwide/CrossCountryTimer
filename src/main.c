@@ -87,10 +87,8 @@ int main(void)
     int currentIndex = 0;
     bool bibEdit = false;
 
-    // divison selector
-    // 0 vasity, 1 JV, 2 Freshman, 3 Middle School
-    static int division = 0;
-    static bool divisionEdit = false;
+    // scoreboard toggle
+    bool boardEdit = false;
 
     // edit mode checkbox
     static bool edit_mode = false;
@@ -224,7 +222,6 @@ int main(void)
         }
 
         // bib value box
-        if (divisionEdit) GuiLock();
         if (GuiValueBox(bibBox, "Enter Bib Number", &bib, 0, 9999, bibEdit)) {
             int row = currentIndex;
             if (edit_mode) row = active;
@@ -251,7 +248,6 @@ int main(void)
         const char *editLabel = "Edit Mode: OFF";
         if (edit_mode) editLabel = "Edit Mode: ON";
         GuiToggle(editBox, editLabel, &edit_mode);
-        if (divisionEdit) GuiUnlock();
 
         if (IsKeyPressed(KEY_DELETE) && edit_mode && active >= 0 && active < lap_count && !showSettings) {
             int currentActive = active;
@@ -276,16 +272,15 @@ int main(void)
         }
 
 
-        // Drawn last so the open menu stays above the bib box and the lap list.
-        int divisionW = GuiGetTextWidth("Middle School") + 62;
-        if (divisionW < butW) divisionW = butW;
-        Rectangle divisionB = {x, butY+butH+gap, (float)divisionW, (float)butH};
-        if (GuiDropdownBox(divisionB, "Varsity;JV;Freshman;Middle School", &division, divisionEdit))
-            divisionEdit = !divisionEdit;
+        // opens a pop-up window
+        int boardW = GuiGetTextWidth("Middle School") + 62;
+        if (boardW < butW) boardW = butW;
+        Rectangle boardB = {x, butY+butH+gap, (float)boardW, (float)butH};
+        GuiToggle(boardB, "Scoreboard", &boardEdit);
 
         // Export PDF
         int pdfW = GuiGetTextWidth("Export to PDF") + 64;
-        Rectangle pdfB = {x+(float)divisionW+gap, butY+butH+gap, (float)pdfW, (float)butH};
+        Rectangle pdfB = {x+(float)boardW+gap, butY+butH+gap, (float)pdfW, (float)butH};
         if (GuiButton(pdfB, "Export to PDF") && !timerStarted) {
             if (lap_count > 0) {
                 sync_row(rows, lap_times, students, lap_count);

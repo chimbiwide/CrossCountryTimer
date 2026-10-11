@@ -1,6 +1,7 @@
 #include <pdf.h>
 #include <data.h>
 #include <stdio.h>
+#include <string.h>
 
 static void draw_cell(struct pdf_doc *pdf, struct pdf_object *page,
                       float x, float y, float width, float height,
@@ -96,11 +97,17 @@ static float draw_standings(struct pdf_doc *pdf, struct pdf_object **page,
         if (s == 0) label = "Winner:";
 
         char score_text[16] = "";
-        char places_text[64];
+        char places_text[64] = "";
+        char temp[5];
         if (school->runners < 5) {
             label = "No score:";
-            snprintf(places_text, sizeof(places_text), "only %d finished, 5 needed",
-                     school->runners);
+            for (int i = 0; i < school->runners-1; i++) {
+                snprintf(temp, sizeof(temp), "%d", school->cumulative[i]);
+                strncat(places_text, temp, sizeof(places_text) - strlen(places_text) - 1);
+                strncat(places_text, " + ", 4);
+            }
+            snprintf(temp, sizeof(temp), "%d", school->cumulative[school->runners-1]);
+            strncat(places_text, temp, sizeof(places_text) - strlen(places_text) - 1);
         } else {
             snprintf(score_text, sizeof(score_text), "%d", school->score);
             snprintf(places_text, sizeof(places_text), "%d + %d + %d + %d + %d",

@@ -93,7 +93,11 @@ void score_teams(Row complete[], int row_count, Result results[]) {
             if (found < 0) continue;
             School *school = &results[division].schools[found];
             
-            if (school->runners < 5) continue;
+            if (school->runners < 5) {
+                school->cumulative[school->placed] = division_rows[j].rank;
+                school->placed++;
+                continue;
+            }
             if (school->placed >= 7) continue;
 
             if (school->placed < 5) {

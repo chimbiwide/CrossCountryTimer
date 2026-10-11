@@ -116,11 +116,3 @@ cmake --build build
 - Middleman
 
 New column for divsion: F, V, J, M
-
----
-
-### TODO
-
-3. Scrolling function broken on windows
-4. Scoring teams (vertical team scoring + horizonal scoreing)
-5. infitine teams

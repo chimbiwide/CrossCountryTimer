@@ -70,6 +70,47 @@ int get_division_rows(Row complete[], int row_count, int division, Row division_
     return division_row_count;
 }
 
+void score_teams(Row complete[], int row_count, Result results[]) {
+    Row division_rows[MAX_RUNNER];
+
+    for (int division = 0; division < DIV_COUNT; division++) {
+        results[division] = (Result){0};
+
+        int division_row_count = get_division_rows(complete, row_count, division, division_rows);
+        if (division_row_count == 0) continue;
+
+        results[division].school_count = sync_school(division_rows, division_row_count, results[division].schools);
+
+        snprintf(results[division].division,
+                 sizeof(results[division].division),
+                 "%s", division_rows[0].division);
+
+        int place = 1;
+        for (int j = 0; j < division_row_count; j++) {
+            int found = search_school(results[division].schools, 
+                                      results[division].school_count,
+                                      division_rows[j].school);
+            if (found < 0) continue;
+            School *school = &results[division].schools[found];
+            
+            if (school->runners < 5) continue;
+            if (school->placed >= 7) continue;
+
+            if (school->placed < 5) {
+                school->score += place;
+                school->cumulative[school->placed] = place;
+            }
+            else if (school->placed == 5) {
+                school->sixth = place;
+                school->cumulative[5] = place;
+            }
+            school->placed++;
+            place++;
+        }
+
+        sort_schools(results[division].schools, results[division].school_count);
+    }
+}
 
 static int school_beats(const School *a, const School *b) {
     int a_full = a->runners >= 5;

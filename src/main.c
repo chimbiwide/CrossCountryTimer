@@ -350,15 +350,15 @@ int main(void)
             if (directionEdit) GuiLock();
             if (GuiWindowBox(panel, "Settings")) showSettings = false;
 
-            if (GuiValueBoxFloat(tempBox, "Enter Temperature (F)", climate.tempreture, &temp, tempEdit)) {
+            if (GuiValueBoxFloat(tempBox, "Enter Temperature (F) ", climate.tempreture, &temp, tempEdit)) {
                 if (tempEdit) endClimateEdit(temp, climate.tempreture, sizeof(climate.tempreture));
                 else beginClimateEdit(climate.tempreture, sizeof(climate.tempreture));
                 tempEdit = !tempEdit;
             }
 
             GuiSetStyle(LABEL, TEXT_ALIGNMENT, TEXT_ALIGN_RIGHT);
-            GuiLabel(windLabel, "Enter Wind Speed (mph)");
-            GuiLabel(directionLabel, "Enter Wind Direction");
+            GuiLabel(windLabel, "Enter Wind Speed (mph) ");
+            GuiLabel(directionLabel, "Enter Wind Direction ");
             GuiSetStyle(LABEL, TEXT_ALIGNMENT, TEXT_ALIGN_CENTER);
             if (GuiTextBox(windInputBox, climate.wind, sizeof(climate.wind), windEdit)) {
                 if (!windEdit) beginClimateEdit(climate.wind, sizeof(climate.wind));
@@ -366,13 +366,13 @@ int main(void)
                 windEdit = !windEdit;
             }
 
-            if (GuiValueBoxFloat(precepBox, "Enter Rainfall (inches)", climate.precipitation, &precep, precepEdit)) {
+            if (GuiValueBoxFloat(precepBox, "Enter Rainfall (inches) ", climate.precipitation, &precep, precepEdit)) {
                 if (precepEdit) endClimateEdit(precep, climate.precipitation, sizeof(climate.precipitation));
                 else beginClimateEdit(climate.precipitation, sizeof(climate.precipitation));
                 precepEdit = !precepEdit;
             }
 
-            if (GuiValueBoxUnset(cloudBox, "Enter Cloud Level (0-10)", &climate.clouds, 0, 10, cloudEdit)) {
+            if (GuiValueBoxUnset(cloudBox, "Enter Cloud Level (0-10) ", &climate.clouds, 0, 10, cloudEdit)) {
                 cloudEdit = !cloudEdit;
             }
 

@@ -1,7 +1,7 @@
 #include <raylib.h>
 #include <timer.h>
 
-void start_timer(Timer *timer, int start_time) {
+void start_timer(Timer *timer, double start_time) {
     timer->running = true;
     timer->startTime = start_time;
 }
@@ -19,7 +19,7 @@ void end_timer(Timer *timer) {
 }
 
 void read_time(Timer *timer, Time *time, double current_time) {
-    double elapsed = current_time - (double)timer->startTime;
+    double elapsed = current_time - timer->startTime;
     if (elapsed < 0.0) elapsed = 0.0;
 
     // Floor to tenths of a second so the last digit updates 10 times/sec.

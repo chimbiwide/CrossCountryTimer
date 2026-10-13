@@ -5,7 +5,7 @@
 
 typedef struct {
     bool running;
-    float startTime;
+    double startTime;
     double pausedTime;
 } Timer;
 
@@ -17,7 +17,7 @@ typedef struct {
     int h;
 } Time;
 
-void start_timer(Timer *timer, int start_time);
+void start_timer(Timer *timer, double start_time);
 void pause_timer(Timer *timer, double current_time);
 void resume_timer(Timer *timer, double current_time);
 void end_timer(Timer *timer);

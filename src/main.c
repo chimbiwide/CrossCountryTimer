@@ -1,15 +1,18 @@
+#include "SDL3/SDL_filesystem.h"
 #include <stdio.h>
 #include <stdbool.h>
 #define RAYGUI_WINDOWBOX_STATUSBAR_HEIGHT 44
 #define RAYGUI_WINDOWBOX_CLOSEBUTTON_HEIGHT 30
 #include "raylib.h"
 #include <xlsxio_read.h>
+#include <SDL3/SDL.h>
 
 #include <pdf.h>
 #include <xlsx.h>
 #include <timer.h>
 #include <font.h>
 #include <data.h>
+#include <scoreboard.h>
 
 #define XBOX_ALIAS_1 "xbox"
 #define XBOX_ALIAS_2 "x-box"
@@ -33,8 +36,12 @@ static int GuiValueBoxUnset(Rectangle bounds, const char *text, int *value, int 
     return result;
 }
 
-int main(void)
+int main(int argc, char *argv[])
 {
+    if (argc == 2 && (strcmp(argv[1], "--scoreboard") == 0)) {
+        scoreboard();
+        return 0;
+    }
     // initialization
     int scWidth = 1280;
     int scHeight = 720;
@@ -89,6 +96,10 @@ int main(void)
 
     // scoreboard toggle
     bool boardEdit = false;
+    bool boardStarted = false;
+    bool boardStop = false;
+    int boardExitCode;
+    SDL_Process *scoreboard_process = NULL;
 
     // edit mode checkbox
     static bool edit_mode = false;
@@ -111,8 +122,34 @@ int main(void)
     bool rightShoulder = false;
     bool leftShoulder = false;
 
+    // scoreboard window
+    char score_path[1024];
+    snprintf(score_path, sizeof(score_path), "%sCrossCountryTimer", SDL_GetBasePath());
+    const char *args[] = {score_path, "--scoreboard", NULL};
+
     while (!WindowShouldClose()) {
         if (IsKeyPressed(KEY_F11)) ToggleBorderlessWindowed();
+
+        // spawn scoreboard
+        if (boardEdit && !boardStarted) {
+            scoreboard_process = SDL_CreateProcess(args, false);
+            if (scoreboard_process == NULL) {
+                boardEdit = false;
+                boardStarted = false;
+            } else {boardStarted = true;}
+        }
+        if (boardStarted && SDL_WaitProcess(scoreboard_process, false, &boardExitCode)) {
+            SDL_DestroyProcess(scoreboard_process);
+            scoreboard_process = NULL;
+            boardEdit = false;
+            boardStarted = false;
+            boardStop = false;
+        }
+        if (boardEdit == false && boardStarted && !boardStop) {
+            SDL_KillProcess(scoreboard_process, false);
+            boardStop = true;
+        }
+
         //list coordinates
         float listW = GetScreenWidth() * 0.75f;
         float listH = GetScreenHeight() / 2.0f;
@@ -387,6 +424,11 @@ int main(void)
         rightShoulder = false;
         leftShoulder = false;
         EndDrawing();
+    }
+
+    if (boardStarted) {
+        SDL_KillProcess(scoreboard_process, true);
+        SDL_DestroyProcess(scoreboard_process);
     }
 
     UnloadFont(font);

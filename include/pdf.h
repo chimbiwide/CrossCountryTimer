@@ -1,8 +1,8 @@
 #ifndef PDF_H
 #define PDF_H
 
-#include "xlsx.h"
-#include "data.h"
+#include <xlsx.h>
+#include <data.h>
 #include <pdfgen.h>
 
 int write_results_pdf(const char *path, Row rows[], int row_count, Result results[],

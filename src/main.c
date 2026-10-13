@@ -1,15 +1,18 @@
+#include "SDL3/SDL_filesystem.h"
 #include <stdio.h>
 #include <stdbool.h>
 #define RAYGUI_WINDOWBOX_STATUSBAR_HEIGHT 44
 #define RAYGUI_WINDOWBOX_CLOSEBUTTON_HEIGHT 30
 #include "raylib.h"
 #include <xlsxio_read.h>
+#include <SDL3/SDL.h>
 
 #include <pdf.h>
 #include <xlsx.h>
 #include <timer.h>
 #include <font.h>
 #include <data.h>
+#include <scoreboard.h>
 
 #define XBOX_ALIAS_1 "xbox"
 #define XBOX_ALIAS_2 "x-box"
@@ -34,8 +37,12 @@ static int GuiValueBoxUnset(Rectangle bounds, const char *text, int *value, int 
     return result;
 }
 
-int main(void)
+int main(int argc, char *argv[])
 {
+    if (argc == 2 && (strcmp(argv[1], "--scoreboard") == 0)) {
+        scoreboard();
+        return 0;
+    }
     // initialization
     int scWidth = 1280;
     int scHeight = 720;
@@ -88,10 +95,12 @@ int main(void)
     int currentIndex = 0;
     bool bibEdit = false;
 
-    // divison selector
-    // 0 vasity, 1 JV, 2 Freshman, 3 Middle School
-    static int division = 0;
-    static bool divisionEdit = false;
+    // scoreboard toggle
+    bool boardEdit = false;
+    bool boardStarted = false;
+    bool boardStop = false;
+    int boardExitCode;
+    SDL_Process *scoreboard_process = NULL;
 
     // edit mode checkbox
     static bool edit_mode = false;
@@ -114,8 +123,34 @@ int main(void)
     bool rightShoulder = false;
     bool leftShoulder = false;
 
+    // scoreboard window
+    char score_path[1024];
+    snprintf(score_path, sizeof(score_path), "%sCrossCountryTimer", SDL_GetBasePath());
+    const char *args[] = {score_path, "--scoreboard", NULL};
+
     while (!WindowShouldClose()) {
         if (IsKeyPressed(KEY_F11)) ToggleBorderlessWindowed();
+
+        // spawn scoreboard
+        if (boardEdit && !boardStarted) {
+            scoreboard_process = SDL_CreateProcess(args, false);
+            if (scoreboard_process == NULL) {
+                boardEdit = false;
+                boardStarted = false;
+            } else {boardStarted = true;}
+        }
+        if (boardStarted && SDL_WaitProcess(scoreboard_process, false, &boardExitCode)) {
+            SDL_DestroyProcess(scoreboard_process);
+            scoreboard_process = NULL;
+            boardEdit = false;
+            boardStarted = false;
+            boardStop = false;
+        }
+        if (boardEdit == false && boardStarted && !boardStop) {
+            SDL_KillProcess(scoreboard_process, false);
+            boardStop = true;
+        }
+
         //list coordinates
         float listW = GetScreenWidth() * 0.75f;
         float listH = GetScreenHeight() / 2.0f;
@@ -225,7 +260,6 @@ int main(void)
         }
 
         // bib value box
-        if (divisionEdit) GuiLock();
         if (GuiValueBox(bibBox, "Enter Bib Number", &bib, 0, 9999, bibEdit)) {
             int row = currentIndex;
             if (edit_mode) row = active;
@@ -252,7 +286,6 @@ int main(void)
         const char *editLabel = "Edit Mode: OFF";
         if (edit_mode) editLabel = "Edit Mode: ON";
         GuiToggle(editBox, editLabel, &edit_mode);
-        if (divisionEdit) GuiUnlock();
 
         if (IsKeyPressed(KEY_DELETE) && edit_mode && active >= 0 && active < lap_count && !showSettings) {
             int currentActive = active;
@@ -277,16 +310,15 @@ int main(void)
         }
 
 
-        // Drawn last so the open menu stays above the bib box and the lap list.
-        int divisionW = GuiGetTextWidth("Middle School") + 62;
-        if (divisionW < butW) divisionW = butW;
-        Rectangle divisionB = {x, butY+butH+gap, (float)divisionW, (float)butH};
-        if (GuiDropdownBox(divisionB, "Varsity;JV;Freshman;Middle School", &division, divisionEdit))
-            divisionEdit = !divisionEdit;
+        // opens a pop-up window
+        int boardW = GuiGetTextWidth("Middle School") + 62;
+        if (boardW < butW) boardW = butW;
+        Rectangle boardB = {x, butY+butH+gap, (float)boardW, (float)butH};
+        GuiToggle(boardB, "Scoreboard", &boardEdit);
 
         // Export PDF
         int pdfW = GuiGetTextWidth("Export to PDF") + 64;
-        Rectangle pdfB = {x+(float)divisionW+gap, butY+butH+gap, (float)pdfW, (float)butH};
+        Rectangle pdfB = {x+(float)boardW+gap, butY+butH+gap, (float)pdfW, (float)butH};
         if (GuiButton(pdfB, "Export to PDF") && !timerStarted) {
             if (lap_count > 0) {
                 sync_row(rows, lap_times, students, lap_count);
@@ -356,15 +388,15 @@ int main(void)
             if (directionEdit) GuiLock();
             if (GuiWindowBox(panel, "Settings")) showSettings = false;
 
-            if (GuiValueBoxFloat(tempBox, "Enter Temperature (F)", climate.tempreture, &temp, tempEdit)) {
+            if (GuiValueBoxFloat(tempBox, "Enter Temperature (F) ", climate.tempreture, &temp, tempEdit)) {
                 if (tempEdit) endClimateEdit(temp, climate.tempreture, sizeof(climate.tempreture));
                 else beginClimateEdit(climate.tempreture, sizeof(climate.tempreture));
                 tempEdit = !tempEdit;
             }
 
             GuiSetStyle(LABEL, TEXT_ALIGNMENT, TEXT_ALIGN_RIGHT);
-            GuiLabel(windLabel, "Enter Wind Speed (mph)");
-            GuiLabel(directionLabel, "Enter Wind Direction");
+            GuiLabel(windLabel, "Enter Wind Speed (mph) ");
+            GuiLabel(directionLabel, "Enter Wind Direction ");
             GuiSetStyle(LABEL, TEXT_ALIGNMENT, TEXT_ALIGN_CENTER);
             if (GuiTextBox(windInputBox, climate.wind, sizeof(climate.wind), windEdit)) {
                 if (!windEdit) beginClimateEdit(climate.wind, sizeof(climate.wind));
@@ -372,13 +404,13 @@ int main(void)
                 windEdit = !windEdit;
             }
 
-            if (GuiValueBoxFloat(precepBox, "Enter Rainfall (inches)", climate.precipitation, &precep, precepEdit)) {
+            if (GuiValueBoxFloat(precepBox, "Enter Rainfall (inches) ", climate.precipitation, &precep, precepEdit)) {
                 if (precepEdit) endClimateEdit(precep, climate.precipitation, sizeof(climate.precipitation));
                 else beginClimateEdit(climate.precipitation, sizeof(climate.precipitation));
                 precepEdit = !precepEdit;
             }
 
-            if (GuiValueBoxUnset(cloudBox, "Enter Cloud Level (0-10)", &climate.clouds, 0, 10, cloudEdit)) {
+            if (GuiValueBoxUnset(cloudBox, "Enter Cloud Level (0-10) ", &climate.clouds, 0, 10, cloudEdit)) {
                 cloudEdit = !cloudEdit;
             }
 
@@ -393,6 +425,11 @@ int main(void)
         rightShoulder = false;
         leftShoulder = false;
         EndDrawing();
+    }
+
+    if (boardStarted) {
+        SDL_KillProcess(scoreboard_process, true);
+        SDL_DestroyProcess(scoreboard_process);
     }
 
     UnloadFont(font);

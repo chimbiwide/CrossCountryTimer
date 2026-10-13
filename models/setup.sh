@@ -1,1 +1,1 @@
-exec ../third_party/whisper.cpp/models/download-ggml-model.sh base.en
+exec ../third_party/whisper.cpp/models/download-ggml-model.sh tiny.en

@@ -127,24 +127,24 @@ endif()
 # added before raylib, which then uses the SDL3::SDL3 target instead of
 # searching the system. SDL_INSTALL puts SDL3-static in an export set;
 # without it raylib's install(EXPORT) stops the configure step.
-if(CCT_WITH_SDL)
-    set(SDL_SHARED OFF CACHE BOOL "Build SDL shared library" FORCE)
-    set(SDL_STATIC ON CACHE BOOL "Build SDL static library" FORCE)
-    set(SDL_TEST_LIBRARY OFF CACHE BOOL "Build SDL test library" FORCE)
-    set(SDL_INSTALL ON CACHE BOOL "SDL install rules" FORCE)
-    # X11 only, as with GLFW. XScrnSaver and XTest are not used here and
-    # each would need one more -dev package.
-    if(UNIX AND NOT APPLE)
-        set(SDL_WAYLAND OFF CACHE BOOL "" FORCE)
-        set(SDL_X11_XSCRNSAVER OFF CACHE BOOL "" FORCE)
-        set(SDL_X11_XTEST OFF CACHE BOOL "" FORCE)
-    endif()
-    # SDL's Windows sources include C++, so the executable links as C++.
-    if(WIN32)
-        enable_language(CXX)
-    endif()
-    add_subdirectory(third_party/SDL SDL EXCLUDE_FROM_ALL)
+# It is built even when CCT_WITH_SDL is OFF: the app calls SDL itself,
+# and that option only picks raylib's backend.
+set(SDL_SHARED OFF CACHE BOOL "Build SDL shared library" FORCE)
+set(SDL_STATIC ON CACHE BOOL "Build SDL static library" FORCE)
+set(SDL_TEST_LIBRARY OFF CACHE BOOL "Build SDL test library" FORCE)
+set(SDL_INSTALL ON CACHE BOOL "SDL install rules" FORCE)
+# X11 only, as with GLFW. XScrnSaver and XTest are not used here and
+# each would need one more -dev package.
+if(UNIX AND NOT APPLE)
+    set(SDL_WAYLAND OFF CACHE BOOL "" FORCE)
+    set(SDL_X11_XSCRNSAVER OFF CACHE BOOL "" FORCE)
+    set(SDL_X11_XTEST OFF CACHE BOOL "" FORCE)
 endif()
+# SDL's Windows sources include C++, so the executable links as C++.
+if(WIN32)
+    enable_language(CXX)
+endif()
+add_subdirectory(third_party/SDL SDL EXCLUDE_FROM_ALL)
 
 # raylib's root CMakeLists calls project() with no LANGUAGES, which
 # enables C++. Use src/ so a C compiler is enough.
@@ -165,6 +165,7 @@ add_executable(CrossCountryTimer
     src/data.c
     src/xlsx.c
     src/pdf.c
+    src/scoreboard.c
 )
 # GUI subsystem: double-clicking the exe opens the app window only.
 # The .rc is the Explorer icon. windres finds the .ico beside the script.
@@ -176,6 +177,9 @@ target_include_directories(CrossCountryTimer PRIVATE
     ${CMAKE_SOURCE_DIR}/include
 )
 target_link_libraries(CrossCountryTimer PRIVATE raylib pdfgen xlsxio_read xlsxio_write)
+# raylib links SDL3 privately, so its headers do not reach the executable.
+# Linking it here makes <SDL3/SDL.h> usable from src/.
+target_link_libraries(CrossCountryTimer PRIVATE SDL3::SDL3)
 
 # whisper.cpp is C++ internally; the public API (whisper.h) is C.
 option(CCT_WITH_WHISPER "Build and link whisper.cpp" ON)

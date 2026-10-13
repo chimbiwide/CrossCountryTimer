@@ -48,97 +48,6 @@ void write_row(const Time *time, const Student *student, char *buffer, int buff_
     }
 }
 
-// DEPRECATED
-void calcuate_score(Row stats[], int row_count, char *winner, int *winner_score, char *loser, int *loser_score){
-    char *school1 = stats[0].school;
-    int school1_count = 0;
-    int school1_score = 0;
-    int school1_tiebreaker = INT_MAX;
-
-    size_t school_len = sizeof(stats[0].school);
-
-    char *school2 = "";
-    int school2_count = 0;
-    int school2_score = 0;
-    int school2_tiebreaker = INT_MAX;
-
-    int i = 1;
-    while (i < row_count && strcmp(school1, stats[i].school) == 0) {
-        i++;
-    }
-    if (i >= row_count) return;
-    school2 = stats[i].school;
-
-    for (int i = 0; i < row_count; i++) {
-        // compare school1
-        if (strcmp(stats[i].school, school1) == 0){
-            if (school1_count < 5 && school2_count < 8) {
-                school1_score += stats[i].rank;
-                school1_count++;
-            }
-            else if (school1_count < 5 && school2_count > 7) {
-                int diff = school2_count - 7;
-                school1_score += stats[i].rank-diff;
-                school1_count++;
-            }
-            else if (school1_count > 5) {
-                school1_count++;
-            }
-            else if (school1_count == 5) {
-                school1_tiebreaker = stats[i].rank;
-                school1_count++;
-            }
-        }
-        // compare school2
-        else if (strcmp(stats[i].school, school2) == 0) {
-            if (school2_count < 5 && school1_count < 8) {
-                school2_score += stats[i].rank;
-                school2_count++;
-            }
-            else if (school2_count < 5 && school1_count > 7) {
-                int diff = school1_count - 7;
-                school2_score += stats[i].rank-diff;
-                school2_count++;
-            }
-            else if (school2_count > 5) {
-                school2_count++;
-            }
-            else if (school2_count == 5) {
-                school2_tiebreaker = stats[i].rank;
-                school2_count++;
-            }
-        }
-        else continue;
-    }
-    if (school1_score > school2_score) {
-        snprintf(winner, school_len, "%s", school2);
-        *winner_score = school2_score;
-        snprintf(loser, school_len, "%s", school1);
-        *loser_score = school1_score;
-    }
-    else if (school1_score < school2_score) {
-        snprintf(winner, school_len, "%s", school1);
-        *winner_score = school1_score;
-        snprintf(loser, school_len, "%s", school2);
-        *loser_score = school2_score;
-    }
-    else {
-        // tie
-        if (school1_tiebreaker < school2_tiebreaker) {
-        snprintf(winner, school_len, "%s", school1);
-        *winner_score = school1_score;
-        snprintf(loser, school_len, "%s", school2);
-        *loser_score = school2_score;
-        }
-        else if (school1_tiebreaker > school2_tiebreaker) {
-        snprintf(winner, school_len, "%s", school2);
-        *winner_score = school2_score;
-        snprintf(loser, school_len, "%s", school1);
-        *loser_score = school1_score;
-        }
-    }
-}
-
 int find_division(const char *division_code) {
     if (division_code[0] == 'V') return 0;
     if (division_code[0] == 'J') return 1;
@@ -184,7 +93,11 @@ void score_teams(Row complete[], int row_count, Result results[]) {
             if (found < 0) continue;
             School *school = &results[division].schools[found];
             
-            if (school->runners < 5) continue;
+            if (school->runners < 5) {
+                school->cumulative[school->placed] = division_rows[j].rank;
+                school->placed++;
+                continue;
+            }
             if (school->placed >= 7) continue;
 
             if (school->placed < 5) {

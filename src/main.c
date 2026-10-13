@@ -17,6 +17,7 @@
 #define PS_ALIAS_2   "sony"
 
 
+#define GUI_SCROLL_DELTA GetMouseWheelMove()
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"
 

@@ -176,6 +176,11 @@ target_include_directories(CrossCountryTimer PRIVATE
     ${CMAKE_SOURCE_DIR}/include
 )
 target_link_libraries(CrossCountryTimer PRIVATE raylib pdfgen xlsxio_read xlsxio_write)
+# raylib links SDL3 privately, so its headers do not reach the executable.
+# Linking it here makes <SDL3/SDL.h> usable from src/.
+if(CCT_WITH_SDL)
+    target_link_libraries(CrossCountryTimer PRIVATE SDL3::SDL3)
+endif()
 
 # whisper.cpp is C++ internally; the public API (whisper.h) is C.
 option(CCT_WITH_WHISPER "Build and link whisper.cpp" ON)

@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
 
-# CMake 4 rejects third-party projects that still declare a policy version
-# older than 3.5 (whisper.cpp / ggml). Floor those at 3.5.
 set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
 
 if(CMAKE_HOST_WIN32 AND NOT CMAKE_GENERATOR MATCHES "MinGW Makefiles|Ninja|Visual Studio")
@@ -12,9 +10,6 @@ if(CMAKE_HOST_WIN32 AND NOT CMAKE_GENERATOR MATCHES "MinGW Makefiles|Ninja|Visua
         "The generator '${CMAKE_GENERATOR}' needs the Visual Studio C compiler.")
 endif()
 
-# #embed needs GCC 16. Distros with an older default gcc install it as gcc-16,
-# so use that name when it exists; otherwise keep the default compiler (Fedora's
-# gcc is already 16). -DCMAKE_C_COMPILER=... or CC still override this.
 if(UNIX AND NOT APPLE AND NOT DEFINED CMAKE_C_COMPILER AND NOT DEFINED ENV{CC})
     find_program(CCT_GCC16 gcc-16)
     find_program(CCT_GXX16 g++-16)
@@ -63,11 +58,6 @@ if(UNIX AND NOT APPLE)
     set(GLFW_BUILD_X11 ON CACHE BOOL "" FORCE)
 endif()
 
-# xlsxio read/write, minizip, zlib, and expat are compiled into the
-# executable. Their own CMake searches the system and would link the
-# shared libraries, so the static targets are selected here instead.
-# These directories are added before raylib so raylib's CPack include
-# remains the one that writes CPackConfig.cmake.
 set(ZLIB_BUILD_SHARED OFF CACHE BOOL "Build zlib shared library" FORCE)
 set(ZLIB_BUILD_STATIC ON CACHE BOOL "Build zlib static library" FORCE)
 set(ZLIB_BUILD_TESTING OFF CACHE BOOL "Build zlib tests" FORCE)
@@ -123,12 +113,6 @@ if(NOT WIN32)
     target_link_libraries(xlsxio_write PUBLIC Threads::Threads)
 endif()
 
-# SDL3 is compiled into the executable like the other dependencies. It is
-# added before raylib, which then uses the SDL3::SDL3 target instead of
-# searching the system. SDL_INSTALL puts SDL3-static in an export set;
-# without it raylib's install(EXPORT) stops the configure step.
-# It is built even when CCT_WITH_SDL is OFF: the app calls SDL itself,
-# and that option only picks raylib's backend.
 set(SDL_SHARED OFF CACHE BOOL "Build SDL shared library" FORCE)
 set(SDL_STATIC ON CACHE BOOL "Build SDL static library" FORCE)
 set(SDL_TEST_LIBRARY OFF CACHE BOOL "Build SDL test library" FORCE)
@@ -140,14 +124,11 @@ if(UNIX AND NOT APPLE)
     set(SDL_X11_XSCRNSAVER OFF CACHE BOOL "" FORCE)
     set(SDL_X11_XTEST OFF CACHE BOOL "" FORCE)
 endif()
-# SDL's Windows sources include C++, so the executable links as C++.
 if(WIN32)
     enable_language(CXX)
 endif()
 add_subdirectory(third_party/SDL SDL EXCLUDE_FROM_ALL)
 
-# raylib's root CMakeLists calls project() with no LANGUAGES, which
-# enables C++. Use src/ so a C compiler is enough.
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/third_party/raylib/cmake")
 include(CompilerFlags)
 add_subdirectory(third_party/raylib/src raylib)
@@ -166,6 +147,7 @@ add_executable(CrossCountryTimer
     src/xlsx.c
     src/pdf.c
     src/scoreboard.c
+    src/transcribe.c
 )
 # GUI subsystem: double-clicking the exe opens the app window only.
 # The .rc is the Explorer icon. windres finds the .ico beside the script.
@@ -177,11 +159,8 @@ target_include_directories(CrossCountryTimer PRIVATE
     ${CMAKE_SOURCE_DIR}/include
 )
 target_link_libraries(CrossCountryTimer PRIVATE raylib pdfgen xlsxio_read xlsxio_write)
-# raylib links SDL3 privately, so its headers do not reach the executable.
-# Linking it here makes <SDL3/SDL.h> usable from src/.
 target_link_libraries(CrossCountryTimer PRIVATE SDL3::SDL3)
 
-# whisper.cpp is C++ internally; the public API (whisper.h) is C.
 option(CCT_WITH_WHISPER "Build and link whisper.cpp" ON)
 if(CCT_WITH_WHISPER)
     enable_language(CXX)
@@ -189,6 +168,20 @@ if(CCT_WITH_WHISPER)
     set(WHISPER_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
     set(WHISPER_BUILD_SERVER OFF CACHE BOOL "" FORCE)
     add_subdirectory(third_party/whisper.cpp EXCLUDE_FROM_ALL)
+    # force ggml to be optimized regardless to build type (debug/release)
+    foreach(whisper_target IN ITEMS whisper ggml ggml-base ggml-cpu)
+        target_compile_options(${whisper_target} PRIVATE $<$<CONFIG:Debug>:-O3>)
+    endforeach()
     target_link_libraries(CrossCountryTimer PRIVATE whisper)
     target_compile_definitions(CrossCountryTimer PRIVATE CCT_HAS_WHISPER)
+
+    # #embed needs the tiny.en model in models/ before the build. The
+    # download is skipped when the file is already there with this SHA1 and
+    # repeated when it is not. The hash is the one whisper.cpp lists in
+    # third_party/whisper.cpp/models/README.md.
+    file(DOWNLOAD
+        https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-tiny.en.bin
+        ${CMAKE_SOURCE_DIR}/models/ggml-tiny.en.bin
+        EXPECTED_HASH SHA1=c78c86eb1a8faa21b369bcd33207cc90d64ae9df
+        SHOW_PROGRESS)
 endif()

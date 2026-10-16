@@ -1,8 +1,10 @@
 #ifndef SCOREBOARD_H
 #define SCOREBOARD_H
 
-int write_laps(char *path, int lap_count, char *laps);
-int sync_laps(char *path, char *laps);
+#define SCORE_PATH "data/score.txt"
+
+int init_score_file(const char *path);
+int write_laps(const char *path, int lap_count, char *laps[]);
 int scoreboard(void);
 
 #endif

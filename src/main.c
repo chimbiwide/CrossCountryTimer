@@ -1,4 +1,7 @@
+#include "SDL3/SDL_audio.h"
 #include "SDL3/SDL_filesystem.h"
+#include "SDL3/SDL_init.h"
+#include "whisper.h"
 #include <stdio.h>
 #include <stdbool.h>
 #define RAYGUI_WINDOWBOX_STATUSBAR_HEIGHT 44
@@ -13,6 +16,7 @@
 #include <font.h>
 #include <data.h>
 #include <scoreboard.h>
+#include <transcribe.h>
 
 #define XBOX_ALIAS_1 "xbox"
 #define XBOX_ALIAS_2 "x-box"
@@ -122,11 +126,52 @@ int main(int argc, char *argv[])
     int gamepad = 0;
     bool rightShoulder = false;
     bool leftShoulder = false;
+    bool rightTrigger = false;
 
-    // scoreboard window
+    // scoreboard
     char score_path[1024];
     snprintf(score_path, sizeof(score_path), "%sCrossCountryTimer", SDL_GetBasePath());
     const char *args[] = {score_path, "--scoreboard", NULL};
+    init_score_file(SCORE_PATH);
+
+    // whisper 
+    struct whisper_context_params cparams = whisper_context_default_params();
+    struct whisper_context *ctx = whisper_init_from_buffer_with_params((void *)whisper_tiny, whisper_tiny_size, cparams);
+    if (ctx == NULL) printf("Failed to load whipser from memory\n");
+
+    struct whisper_full_params params = whisper_full_default_params(WHISPER_SAMPLING_GREEDY);
+    params.print_progress = false;
+    params.single_segment = true;
+    params.no_timestamps = true;
+    params.initial_prompt = "1042, 873, 2210, 1300, 907, 4015, 9057";
+    set_grammar(&params);
+
+    // allocate memory for the audio buffer
+    float *audio_buffer = malloc(BUFF_SIZE * sizeof(float));
+    int audio_buffer_size = 0;
+
+    Audio_data data = {
+        .context = ctx,
+        .params = &params,
+        .buffer = audio_buffer,
+        .buffer_size = audio_buffer_size,
+    };
+
+    bool transcribing = false;
+    SDL_Thread *whisper_thread = NULL;
+    // audio
+    bool recordingStarted = false;
+    bool isRecording = false;
+    bool stopRecording = false;
+    bool isReady = false;
+    SDL_InitSubSystem(SDL_INIT_AUDIO);
+    SDL_AudioSpec spec = {
+        .format = SDL_AUDIO_F32,
+        .channels = 1,
+        .freq = 16000,
+    };
+    SDL_AudioStream *mic = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_RECORDING, &spec, NULL, NULL);
+    if (mic == NULL) printf("Failed to start audio device\n");
 
     while (!WindowShouldClose()) {
         if (IsKeyPressed(KEY_F11)) ToggleBorderlessWindowed();
@@ -182,6 +227,16 @@ int main(int argc, char *argv[])
             if (IsGamepadButtonPressed(gamepad, GAMEPAD_BUTTON_LEFT_TRIGGER_1)) {
                 leftShoulder = true;
             }
+            if (IsGamepadButtonPressed(gamepad, GAMEPAD_BUTTON_RIGHT_TRIGGER_2)) {
+                rightTrigger = true;
+            }
+            if (IsGamepadButtonDown(gamepad, GAMEPAD_BUTTON_RIGHT_TRIGGER_2)) {
+                isRecording = true;
+            }
+            if (IsGamepadButtonReleased(gamepad, GAMEPAD_BUTTON_RIGHT_TRIGGER_2)) {
+                stopRecording = true;
+                isRecording = false;
+            }
         }
 
         // the timer
@@ -223,6 +278,7 @@ int main(int argc, char *argv[])
             write_row(&lap_times[lap_count], &none, lap_text[lap_count], 256, lap_count);
             laps[lap_count] = lap_text[lap_count];
             lap_count++;
+            write_laps(SCORE_PATH, lap_count, laps);
 
             // scroll to bottom once per update
             int row = GuiGetStyle(LISTVIEW, LIST_ITEMS_HEIGHT) + GuiGetStyle(LISTVIEW, LIST_ITEMS_SPACING);
@@ -253,6 +309,7 @@ int main(int argc, char *argv[])
             currentIndex = 0;
             bib = 0;
             for (int i = 0; i < MAX_RUNNER; i++) students[i] = (Student){0};
+            write_laps(SCORE_PATH, lap_count, laps);
 
             scroll = 0;
             active = -1;
@@ -270,6 +327,7 @@ int main(int argc, char *argv[])
                 if (found >= 0) who = roster[found];
                 write_student(&who, &students[row]);
                 write_row(&lap_times[row], &who, lap_text[row], 256, row);
+                write_laps(SCORE_PATH, lap_count, laps);
                 if (!edit_mode) {
                     active = currentIndex;
                     currentIndex++;
@@ -298,6 +356,7 @@ int main(int argc, char *argv[])
             for (int i = currentActive; i < lap_count; i++) {
                 write_row(&lap_times[i], &students[i], lap_text[i], 256, i);
             }
+            write_laps(SCORE_PATH, lap_count, laps);
             if (currentActive < currentIndex) currentIndex--;
             active = -1;
 
@@ -420,10 +479,51 @@ int main(int argc, char *argv[])
                 directionEdit = !directionEdit;
             }
         }
+
+        if (!transcribing && rightTrigger) {
+            audio_buffer_size = 0;
+            start_recording(mic);
+            recordingStarted = true;
+        }
+        // a press that came in while transcribing never started, so it records nothing
+        if (recordingStarted && isRecording) {
+            // TODO: this replaces the Lap rumble one frame later
+            SetGamepadVibration(gamepad, 0.1f, 0.1f, 0.1f);
+            int result = record(mic, &audio_buffer[audio_buffer_size], BUFF_SIZE-audio_buffer_size);
+            if (result > -1) {
+                audio_buffer_size += result;
+            }
+        }
+        if (recordingStarted && stopRecording) {
+            pause_recording(mic);
+            int result = record(mic, &audio_buffer[audio_buffer_size], BUFF_SIZE-audio_buffer_size);
+            if (result > -1) {
+                audio_buffer_size += result;
+            }
+            recordingStarted = false;
+            // TODO: skip clips under 100 ms (WHISPER_SAMPLE_RATE / 10), they are mis-taps
+            isReady = true;
+        }
+
+        if (isReady) {
+            isReady = false;
+            // TODO: data.buffer_size is still the 0 it was initialized with, copy audio_buffer_size in first
+            whisper_thread = SDL_CreateThread(transcribe, "whisper", &data);
+            if (whisper_thread != NULL) transcribing = true;
+        }
+        // data.result is safe to read once SDL_WaitThread returns
+        if (transcribing && SDL_GetThreadState(whisper_thread) == SDL_THREAD_COMPLETE) {
+            SDL_WaitThread(whisper_thread, NULL);
+            whisper_thread = NULL;
+            transcribing = false;
+        }
+
         // read the time after every frame
         if (timerStarted) read_time(&timer, &time, GetTime());
         rightShoulder = false;
         leftShoulder = false;
+        rightTrigger = false;
+        stopRecording = false;
         EndDrawing();
     }
 
@@ -431,6 +531,12 @@ int main(int argc, char *argv[])
         SDL_KillProcess(scoreboard_process, true);
         SDL_DestroyProcess(scoreboard_process);
     }
+    remove(SCORE_PATH);
+    // TODO: SDL_WaitThread on whisper_thread first, it may still be using audio_buffer and ctx
+    free(audio_buffer);
+    whisper_free(ctx);
+    SDL_DestroyAudioStream(mic);
+    SDL_QuitSubSystem(SDL_INIT_AUDIO);
 
     UnloadFont(font);
     CloseWindow();

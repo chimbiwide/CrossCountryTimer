@@ -1,5 +1,7 @@
 #include "SDL3/SDL_audio.h"
+#include <stdlib.h>
 #include <transcribe.h>
+#include <ctype.h>
 
 const unsigned char whisper_tiny[] = {
     #embed "../models/ggml-tiny.en.bin"
@@ -57,6 +59,27 @@ void pause_recording(SDL_AudioStream *stream) {
     SDL_PauseAudioStreamDevice(stream);
 }
 
-int transcribe(void *data) {
+int transcribe(void *arg) {
+    Audio_data *data = arg;
+    const char *whisper_result;
+    int digits_length = 0;
+    char whisper_digits[5];
+    data->result = 0;
+    // run inference
+    if (whisper_full(data->context, *data->params, data->buffer, data->buffer_size) != 0) return -1;
+    if (whisper_full_n_segments(data->context) != 1) return -1;
+    whisper_result = whisper_full_get_segment_text(data->context, 0);
+    int result_length = strlen(whisper_result);
+    for (int i = 0; i < result_length; i++) {
+        if (isdigit((unsigned char)whisper_result[i])) {
+            if (digits_length < 4) {
+                whisper_digits[digits_length] = whisper_result[i]; 
+            }
+            digits_length++;
+        }
+    }
+    if (digits_length > 4) return -1;
+    whisper_digits[digits_length] = '\0';
+    data->result = atoi(whisper_digits);
     return 0;
 }

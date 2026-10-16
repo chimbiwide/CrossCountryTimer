@@ -1,6 +1,7 @@
 #include "SDL3/SDL_audio.h"
 #include "SDL3/SDL_filesystem.h"
 #include "SDL3/SDL_init.h"
+#include "SDL3/SDL_thread.h"
 #include "whisper.h"
 #include <stdio.h>
 #include <stdbool.h>
@@ -157,6 +158,7 @@ int main(int argc, char *argv[])
         .buffer_size = audio_buffer_size,
     };
 
+    int whisper_status;
     bool transcribing = false;
     SDL_Thread *whisper_thread = NULL;
     // audio
@@ -487,7 +489,6 @@ int main(int argc, char *argv[])
         }
         // a press that came in while transcribing never started, so it records nothing
         if (recordingStarted && isRecording) {
-            // TODO: this replaces the Lap rumble one frame later
             SetGamepadVibration(gamepad, 0.1f, 0.1f, 0.1f);
             int result = record(mic, &audio_buffer[audio_buffer_size], BUFF_SIZE-audio_buffer_size);
             if (result > -1) {
@@ -501,13 +502,12 @@ int main(int argc, char *argv[])
                 audio_buffer_size += result;
             }
             recordingStarted = false;
-            // TODO: skip clips under 100 ms (WHISPER_SAMPLE_RATE / 10), they are mis-taps
-            isReady = true;
+            if (audio_buffer_size > (WHISPER_SAMPLE_RATE / 10)) isReady = true;
         }
 
         if (isReady) {
             isReady = false;
-            // TODO: data.buffer_size is still the 0 it was initialized with, copy audio_buffer_size in first
+            data.buffer_size = audio_buffer_size;
             whisper_thread = SDL_CreateThread(transcribe, "whisper", &data);
             if (whisper_thread != NULL) transcribing = true;
         }
@@ -532,7 +532,7 @@ int main(int argc, char *argv[])
         SDL_DestroyProcess(scoreboard_process);
     }
     remove(SCORE_PATH);
-    // TODO: SDL_WaitThread on whisper_thread first, it may still be using audio_buffer and ctx
+    SDL_WaitThread(whisper_thread, &whisper_status);
     free(audio_buffer);
     whisper_free(ctx);
     SDL_DestroyAudioStream(mic);

@@ -122,10 +122,11 @@ int main(int argc, char *argv[])
     bool rightShoulder = false;
     bool leftShoulder = false;
 
-    // scoreboard window
+    // scoreboard
     char score_path[1024];
     snprintf(score_path, sizeof(score_path), "%sCrossCountryTimer", SDL_GetBasePath());
     const char *args[] = {score_path, "--scoreboard", NULL};
+    init_score_file(SCORE_PATH);
 
     while (!WindowShouldClose()) {
         if (IsKeyPressed(KEY_F11)) ToggleBorderlessWindowed();
@@ -222,6 +223,7 @@ int main(int argc, char *argv[])
             write_row(&lap_times[lap_count], &none, lap_text[lap_count], 256, lap_count);
             laps[lap_count] = lap_text[lap_count];
             lap_count++;
+            write_laps(SCORE_PATH, lap_count, laps);
 
             // scroll to bottom once per update
             int row = GuiGetStyle(LISTVIEW, LIST_ITEMS_HEIGHT) + GuiGetStyle(LISTVIEW, LIST_ITEMS_SPACING);
@@ -252,6 +254,7 @@ int main(int argc, char *argv[])
             currentIndex = 0;
             bib = 0;
             for (int i = 0; i < MAX_RUNNER; i++) students[i] = (Student){0};
+            write_laps(SCORE_PATH, lap_count, laps);
 
             scroll = 0;
             active = -1;
@@ -269,6 +272,7 @@ int main(int argc, char *argv[])
                 if (found >= 0) who = roster[found];
                 write_student(&who, &students[row]);
                 write_row(&lap_times[row], &who, lap_text[row], 256, row);
+                write_laps(SCORE_PATH, lap_count, laps);
                 if (!edit_mode) {
                     active = currentIndex;
                     currentIndex++;
@@ -297,6 +301,7 @@ int main(int argc, char *argv[])
             for (int i = currentActive; i < lap_count; i++) {
                 write_row(&lap_times[i], &students[i], lap_text[i], 256, i);
             }
+            write_laps(SCORE_PATH, lap_count, laps);
             if (currentActive < currentIndex) currentIndex--;
             active = -1;
 
@@ -430,6 +435,7 @@ int main(int argc, char *argv[])
         SDL_KillProcess(scoreboard_process, true);
         SDL_DestroyProcess(scoreboard_process);
     }
+    remove(SCORE_PATH);
 
     UnloadFont(font);
     CloseWindow();

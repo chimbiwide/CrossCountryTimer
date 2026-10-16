@@ -321,7 +321,7 @@ int main(int argc, char *argv[])
         if (GuiValueBox(bibBox, "Enter Bib Number", &bib, 0, 9999, bibEdit)) {
             int row = currentIndex;
             if (edit_mode) row = active;
-            if (bibEdit && bib >= 0 && row >= 0 && row < lap_count) {
+            if (bibEdit && bib > 0 && row >= 0 && row < lap_count) {
                 Student who = {0};
                 who.bib = bib;
                 int found = search_name(roster, runners, bib);
@@ -530,6 +530,7 @@ int main(int argc, char *argv[])
                     currentIndex++;
                 }
             }
+            else SetGamepadVibration(gamepad, 1.0f, 1.0f, 1.0f);
             transcribing = false;
         }
 

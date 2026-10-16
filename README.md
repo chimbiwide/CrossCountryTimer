@@ -116,3 +116,9 @@ cmake --build build
 - Middleman
 
 New column for divsion: F, V, J, M
+
+---
+
+### TODO
+
+add the ability to choose mic in the settings panel

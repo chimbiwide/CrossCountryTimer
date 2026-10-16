@@ -143,6 +143,7 @@ int main(int argc, char *argv[])
     params.single_segment = true;
     params.no_timestamps = true;
     params.initial_prompt = "1042, 873, 2210, 1300, 907, 4015, 9057";
+    set_grammar(&params);
 
     // allocate memory for the audio buffer
     float *audio_buffer = malloc(BUFF_SIZE * sizeof(float));

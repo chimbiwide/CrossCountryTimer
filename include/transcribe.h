@@ -22,6 +22,7 @@ void start_recording(SDL_AudioStream *stream);
 int record(SDL_AudioStream *stream, float *buffer, int len);
 void pause_recording(SDL_AudioStream *stream);
 
+void set_grammar(struct whisper_full_params *params);
 int transcribe(void *data);
 
 #endif

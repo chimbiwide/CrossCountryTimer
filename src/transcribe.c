@@ -64,7 +64,7 @@ int transcribe(void *arg) {
     const char *whisper_result;
     int digits_length = 0;
     char whisper_digits[5];
-    data->result = 0;
+    data->result = -1;
     // run inference
     if (whisper_full(data->context, *data->params, data->buffer, data->buffer_size) != 0) return -1;
     if (whisper_full_n_segments(data->context) != 1) return -1;
@@ -80,6 +80,7 @@ int transcribe(void *arg) {
     }
     if (digits_length > 4) return -1;
     whisper_digits[digits_length] = '\0';
+    if (digits_length == 0) return -1;
     data->result = atoi(whisper_digits);
     return 0;
 }

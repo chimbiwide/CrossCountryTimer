@@ -158,7 +158,6 @@ int main(int argc, char *argv[])
         .buffer_size = audio_buffer_size,
     };
 
-    int whisper_status;
     bool transcribing = false;
     SDL_Thread *whisper_thread = NULL;
     // audio
@@ -322,7 +321,7 @@ int main(int argc, char *argv[])
         if (GuiValueBox(bibBox, "Enter Bib Number", &bib, 0, 9999, bibEdit)) {
             int row = currentIndex;
             if (edit_mode) row = active;
-            if (bibEdit && bib > 0 && row >= 0 && row < lap_count) {
+            if (bibEdit && bib >= 0 && row >= 0 && row < lap_count) {
                 Student who = {0};
                 who.bib = bib;
                 int found = search_name(roster, runners, bib);
@@ -515,6 +514,22 @@ int main(int argc, char *argv[])
         if (transcribing && SDL_GetThreadState(whisper_thread) == SDL_THREAD_COMPLETE) {
             SDL_WaitThread(whisper_thread, NULL);
             whisper_thread = NULL;
+            
+            int row = currentIndex;
+            if (edit_mode) row = active;
+            if (data.result > -1 && row >= 0 && row < lap_count) {
+                Student who = {0};
+                who.bib = data.result;
+                int found = search_name(roster, runners, data.result);
+                if (found >= 0) who = roster[found];
+                write_student(&who, &students[row]);
+                write_row(&lap_times[row], &who, lap_text[row], 256, row);
+                write_laps(SCORE_PATH, lap_count, laps);
+                if (!edit_mode) {
+                    active = currentIndex;
+                    currentIndex++;
+                }
+            }
             transcribing = false;
         }
 
@@ -532,7 +547,7 @@ int main(int argc, char *argv[])
         SDL_DestroyProcess(scoreboard_process);
     }
     remove(SCORE_PATH);
-    SDL_WaitThread(whisper_thread, &whisper_status);
+    SDL_WaitThread(whisper_thread, NULL);
     free(audio_buffer);
     whisper_free(ctx);
     SDL_DestroyAudioStream(mic);

@@ -1,10 +1,9 @@
 #include <gamepad.h>
+#include <stdbool.h>
+#include <string.h>
 
 void zero_state(GamepadState *pad) {
-    pad->rightShoulder = false;
-    pad->leftShoulder = false;
-    pad->rightTrigger = false;
-    pad->leftTrigger = false;
+    memset(pad, 0, sizeof(GamepadState));
 }
 
 
@@ -20,5 +19,11 @@ void update_pad_state(int gamepad, GamepadState *pad) {
     }
     if (IsGamepadButtonPressed(gamepad, LEFT_TRIGGER)) {
         pad->leftTrigger = true;
+    }
+    if (IsGamepadButtonPressed(gamepad, DPAD_DOWN)) {
+        pad->dpadDown = true;
+    }
+    if (IsGamepadButtonPressed(gamepad, DPAD_UP)) {
+        pad->dpadUp = true;
     }
 }

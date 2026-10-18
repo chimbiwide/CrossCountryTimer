@@ -224,6 +224,9 @@ int main(int argc, char *argv[])
 
         if (IsGamepadAvailable(gamepad)) {
             update_pad_state(gamepad, &padState);
+            if (IsGamepadButtonPressed(gamepad, CROSS)) {
+                edit_mode = !edit_mode;
+            }
             if (IsGamepadButtonDown(gamepad, RIGHT_TRIGGER)) {
                 isRecording = true;
             }
@@ -295,7 +298,7 @@ int main(int argc, char *argv[])
         }
 
         // reset button
-        if ((GuiButton(resetB, "Reset") || padState.leftTrigger) && !timerStarted) {
+        if (GuiButton(resetB, "Reset") && !timerStarted) {
             if (padState.leftTrigger) SetGamepadVibration(gamepad, 0.75f, 0.75f, 0.5f);
             stopped = false;
             end_timer(&timer);

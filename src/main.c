@@ -74,17 +74,17 @@ int main(int argc, char *argv[])
     // Lists
     static char lap_text[MAX_RUNNER][256];
     static char *laps[MAX_RUNNER];
-    static int lap_count;
-    static int scroll;
-    static int active;
-    static int focused;
+    int lap_count;
+    int scroll;
+    int active;
+    int focused;
 
     static Time lap_times[MAX_RUNNER];
     static Student students[MAX_RUNNER];
     static Row rows[MAX_RUNNER] = {0};
 
     // student index
-    Student roster[CAPACITY] = {0};
+    static Student roster[CAPACITY] = {0};
 
     int runners = 0;
     xlsxioreader reader;
@@ -108,20 +108,20 @@ int main(int argc, char *argv[])
     SDL_Process *scoreboard_process = NULL;
 
     // edit mode checkbox
-    static bool edit_mode = false;
+    bool edit_mode = false;
     
     // settings box
-    static bool showSettings = false;
+    bool showSettings = false;
 
-    static Climate climate = {CLIMATE_UNKNOWN, CLIMATE_UNKNOWN, CLIMATE_UNKNOWN, CLIMATE_UNKNOWN, -1};
-    static float temp = 0.0;
-    static float precep = 0.0;
-    static int windDirection = 0;
-    static bool tempEdit = false;
-    static bool windEdit = false;
-    static bool directionEdit = false;
-    static bool cloudEdit = false;
-    static bool precepEdit = false;
+    Climate climate = {CLIMATE_UNKNOWN, CLIMATE_UNKNOWN, CLIMATE_UNKNOWN, CLIMATE_UNKNOWN, -1};
+    float temp = 0.0;
+    float precep = 0.0;
+    int windDirection = 0;
+    bool tempEdit = false;
+    bool windEdit = false;
+    bool directionEdit = false;
+    bool cloudEdit = false;
+    bool precepEdit = false;
 
     // gamepad
     int gamepad = 0;
@@ -160,11 +160,12 @@ int main(int argc, char *argv[])
 
     bool transcribing = false;
     SDL_Thread *whisper_thread = NULL;
+
     // audio
-    static bool recordingStarted = false;
-    static bool isRecording = false;
-    static bool stopRecording = false;
-    static bool isReady = false;
+    bool recordingStarted = false;
+    bool isRecording = false;
+    bool stopRecording = false;
+    bool isReady = false;
     SDL_InitSubSystem(SDL_INIT_AUDIO);
     SDL_AudioSpec spec = {
         .format = SDL_AUDIO_F32,
@@ -271,6 +272,7 @@ int main(int argc, char *argv[])
                 resume_timer(&timer, GetTime());
             }
         }
+
         // lap button. Name and school stay blank until a bib is entered for this row.
         if ((GuiButton(lapB, "Lap") ||rightShoulder) && timerStarted && lap_count < MAX_RUNNER) {
             if (rightShoulder) SetGamepadVibration(gamepad, 0.5f, 0.5f, 0.25f);
@@ -337,6 +339,7 @@ int main(int argc, char *argv[])
             else bib = 0;
             bibEdit = !bibEdit;
         }
+
         // the grid list
         GuiListViewEx((Rectangle){listX, listY, listW, listH},
                       laps, lap_count, &scroll, &active, &focused);
@@ -368,7 +371,6 @@ int main(int argc, char *argv[])
             if (maxScroll < 0) maxScroll = 0;
             if (scroll > maxScroll) scroll = maxScroll;
         }
-
 
         // opens a pop-up window
         int boardW = GuiGetTextWidth("Middle School") + 62;
@@ -536,6 +538,7 @@ int main(int argc, char *argv[])
 
         // read the time after every frame
         if (timerStarted) read_time(&timer, &time, GetTime());
+
         rightShoulder = false;
         leftShoulder = false;
         rightTrigger = false;

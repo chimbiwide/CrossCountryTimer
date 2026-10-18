@@ -18,6 +18,7 @@
 #include <data.h>
 #include <scoreboard.h>
 #include <transcribe.h>
+#include <gamepad.h>
 
 #define XBOX_ALIAS_1 "xbox"
 #define XBOX_ALIAS_2 "x-box"
@@ -125,9 +126,8 @@ int main(int argc, char *argv[])
 
     // gamepad
     int gamepad = 0;
-    bool rightShoulder = false;
-    bool leftShoulder = false;
-    bool rightTrigger = false;
+    GamepadState padState;
+    zero_state(&padState);
 
     // scoreboard
     char score_path[1024];
@@ -223,15 +223,7 @@ int main(int argc, char *argv[])
         ClearBackground(RAYWHITE);
 
         if (IsGamepadAvailable(gamepad)) {
-            if (IsGamepadButtonPressed(gamepad, GAMEPAD_BUTTON_RIGHT_TRIGGER_1)) {
-                rightShoulder = true;
-            }
-            if (IsGamepadButtonPressed(gamepad, GAMEPAD_BUTTON_LEFT_TRIGGER_1)) {
-                leftShoulder = true;
-            }
-            if (IsGamepadButtonPressed(gamepad, GAMEPAD_BUTTON_RIGHT_TRIGGER_2)) {
-                rightTrigger = true;
-            }
+            update_pad_state(gamepad, &padState);
             if (IsGamepadButtonDown(gamepad, GAMEPAD_BUTTON_RIGHT_TRIGGER_2)) {
                 isRecording = true;
             }
@@ -260,10 +252,10 @@ int main(int argc, char *argv[])
         GuiSetIconScale(1);
 
         // the start button
-        if ((GuiButton(startB, "Start") || rightShoulder) && !timerStarted) {
-            if (rightShoulder) {
+        if ((GuiButton(startB, "Start") || padState.rightShoulder) && !timerStarted) {
+            if (padState.rightShoulder) {
                 SetGamepadVibration(gamepad, 0.0f, 0.75f, 0.5f);
-                rightShoulder = false;
+                padState.rightShoulder = false;
             }
             timerStarted = true;
             if (!stopped) start_timer(&timer, GetTime());
@@ -274,8 +266,8 @@ int main(int argc, char *argv[])
         }
 
         // lap button. Name and school stay blank until a bib is entered for this row.
-        if ((GuiButton(lapB, "Lap") ||rightShoulder) && timerStarted && lap_count < MAX_RUNNER) {
-            if (rightShoulder) SetGamepadVibration(gamepad, 0.5f, 0.5f, 0.25f);
+        if ((GuiButton(lapB, "Lap") ||padState.rightShoulder) && timerStarted && lap_count < MAX_RUNNER) {
+                if (padState.rightShoulder) SetGamepadVibration(gamepad, 0.5f, 0.5f, 0.25f);
             Student none = {0};
             lap_times[lap_count] = time;
             write_row(&lap_times[lap_count], &none, lap_text[lap_count], 256, lap_count);
@@ -292,10 +284,10 @@ int main(int argc, char *argv[])
         }
 
         // stop button
-        if ((GuiButton(stopB, "Stop") || leftShoulder) && timerStarted) {
-            if (leftShoulder) {
+        if ((GuiButton(stopB, "Stop") || padState.leftShoulder) && timerStarted) {
+            if (padState.leftShoulder) {
                 SetGamepadVibration(gamepad, 0.75f, 0.0f, 0.5f);
-                leftShoulder = false;
+                padState.leftShoulder = false;
             }
             stopped = true;
             pause_timer(&timer, GetTime());
@@ -483,7 +475,7 @@ int main(int argc, char *argv[])
             }
         }
 
-        if (!transcribing && rightTrigger) {
+        if (!transcribing && padState.rightTrigger) {
             audio_buffer_size = 0;
             start_recording(mic);
             recordingStarted = true;
@@ -539,9 +531,7 @@ int main(int argc, char *argv[])
         // read the time after every frame
         if (timerStarted) read_time(&timer, &time, GetTime());
 
-        rightShoulder = false;
-        leftShoulder = false;
-        rightTrigger = false;
+        zero_state(&padState);
         stopRecording = false;
         EndDrawing();
     }

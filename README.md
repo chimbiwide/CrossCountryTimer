@@ -78,24 +78,10 @@ The preset is a Release build and writes `build\CrossCountryTimer.exe`. Start it
 
 MinGW's runtime DLLs (`libgcc_s_seh-1.dll`, `libstdc++-6.dll`, `libwinpthread-1.dll`) have to be on `PATH`. It will work if launched from a terminal where `gcc` is available.
 
-
-Compile without whisper:
-```powershell
-cmake --preset windows -DCCT_WITH_WHISPER=OFF
-cmake --build --preset windows -j
-```
-
 Default build type on Linux is Debug. For a Release build:
 
 ```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build
-```
-
-whisper.cpp is linked in by default (`CCT_WITH_WHISPER=ON`) and is the slow part of the compile. To skip it:
-
-```bash
-cmake -S . -B build -DCCT_WITH_WHISPER=OFF
 cmake --build build
 ```
 

@@ -161,10 +161,10 @@ int main(int argc, char *argv[])
     bool transcribing = false;
     SDL_Thread *whisper_thread = NULL;
     // audio
-    bool recordingStarted = false;
-    bool isRecording = false;
-    bool stopRecording = false;
-    bool isReady = false;
+    static bool recordingStarted = false;
+    static bool isRecording = false;
+    static bool stopRecording = false;
+    static bool isReady = false;
     SDL_InitSubSystem(SDL_INIT_AUDIO);
     SDL_AudioSpec spec = {
         .format = SDL_AUDIO_F32,

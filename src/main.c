@@ -224,10 +224,10 @@ int main(int argc, char *argv[])
 
         if (IsGamepadAvailable(gamepad)) {
             update_pad_state(gamepad, &padState);
-            if (IsGamepadButtonDown(gamepad, GAMEPAD_BUTTON_RIGHT_TRIGGER_2)) {
+            if (IsGamepadButtonDown(gamepad, RIGHT_TRIGGER)) {
                 isRecording = true;
             }
-            if (IsGamepadButtonReleased(gamepad, GAMEPAD_BUTTON_RIGHT_TRIGGER_2)) {
+            if (IsGamepadButtonReleased(gamepad, RIGHT_TRIGGER)) {
                 stopRecording = true;
                 isRecording = false;
             }
@@ -267,7 +267,7 @@ int main(int argc, char *argv[])
 
         // lap button. Name and school stay blank until a bib is entered for this row.
         if ((GuiButton(lapB, "Lap") ||padState.rightShoulder) && timerStarted && lap_count < MAX_RUNNER) {
-                if (padState.rightShoulder) SetGamepadVibration(gamepad, 0.5f, 0.5f, 0.25f);
+            if (padState.rightShoulder) SetGamepadVibration(gamepad, 0.5f, 0.5f, 0.25f);
             Student none = {0};
             lap_times[lap_count] = time;
             write_row(&lap_times[lap_count], &none, lap_text[lap_count], 256, lap_count);
@@ -295,7 +295,8 @@ int main(int argc, char *argv[])
         }
 
         // reset button
-        if (GuiButton(resetB, "Reset") && !timerStarted) {
+        if ((GuiButton(resetB, "Reset") || padState.leftTrigger) && !timerStarted) {
+            if (padState.leftTrigger) SetGamepadVibration(gamepad, 0.75f, 0.75f, 0.5f);
             stopped = false;
             end_timer(&timer);
             reset_time(&time);

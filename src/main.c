@@ -336,6 +336,8 @@ int main(int argc, char *argv[])
             bibEdit = !bibEdit;
         }
 
+        dpad_scroll(&padState, &lap_count, &scroll, &active);
+
         // the grid list
         GuiListViewEx((Rectangle){listX, listY, listW, listH},
                       laps, lap_count, &scroll, &active, &focused);
@@ -512,7 +514,7 @@ int main(int argc, char *argv[])
         if (transcribing && SDL_GetThreadState(whisper_thread) == SDL_THREAD_COMPLETE) {
             SDL_WaitThread(whisper_thread, NULL);
             whisper_thread = NULL;
-            
+
             int row = currentIndex;
             if (edit_mode) row = active;
             if (data.result > -1 && row >= 0 && row < lap_count) {

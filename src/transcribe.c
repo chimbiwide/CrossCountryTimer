@@ -4,7 +4,7 @@
 #include <ctype.h>
 
 const unsigned char whisper_tiny[] = {
-    #embed "../models/ggml-tiny.en.bin"
+    #embed "../models/ggml-base.en.bin"
 };
 
 const size_t whisper_tiny_size = sizeof(whisper_tiny);

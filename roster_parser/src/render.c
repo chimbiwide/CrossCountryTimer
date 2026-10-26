@@ -4,9 +4,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-// The OCR model reads small images at full detail, and its work grows with
-// the square of an image's size. A bigger image is slower per pixel, and one
-// big enough gets scaled down until the "lll" in a name comes out as "ll".
 #define MAX_PIXELS 300000
 
 bool render_open(Pdf *pdf, const char *path) {

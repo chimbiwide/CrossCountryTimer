@@ -8,18 +8,18 @@
 
 typedef struct {
     int64_t bib;
-    int number;         // the "12." in front of the name, counts up per school
+    int number;
     int year;
     char sex;
-    char name[64];      // as printed, "Tassone, Nico"
-    char school[16];    // code from the school line, "BCH"
+    char name[64];
+    char school[16];
 } Athlete;
 
 typedef struct {
     Athlete athletes[MAX_ATHLETES];
     int count;
-    int total;          // the "Total Athletes:" line, -1 until it is read
-    char school[16];    // school of the rows being read, carried from one crop to the next
+    int total;
+    char school[16];
 } Roster;
 
 void roster_init(Roster *roster);

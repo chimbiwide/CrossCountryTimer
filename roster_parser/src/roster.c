@@ -1,5 +1,5 @@
 #include <roster.h>
-#include <xlsx.h>     // the timer's read_lookup(), from ../src/xlsx.c
+#include <xlsx.h>
 #include <xlsxio_write.h>
 #include <ctype.h>
 #include <stdio.h>
@@ -11,7 +11,6 @@ void roster_init(Roster *roster) {
     roster->total = -1;
 }
 
-// "Boston College High School (BCH)" -> "BCH"
 static bool read_school(const char *line, char *code, int size) {
     int length = (int)strlen(line);
     const char *open = strrchr(line, '(');
@@ -34,7 +33,6 @@ static bool all_digits(const char *word) {
     return true;
 }
 
-// "12. LaMay, Ethan 1092 M 8": the row number, the name, then the bib, sex and year
 static bool read_row(const char *line, Athlete *athlete) {
     char copy[256];
     char *words[32];
@@ -113,8 +111,7 @@ int roster_add_text(Roster *roster, const char *text) {
 }
 
 // Each school's rows have to come out 1, 2, 3, ... in reading order, every bib
-// once, and the count has to match the roster's own total. A skipped or
-// misread row breaks one of those.
+// once, and the count has to match the roster's own total.
 bool roster_check(const Roster *roster, char *error, int size) {
     if (roster->count == 0) {
         snprintf(error, size, "No athletes were read");
@@ -155,8 +152,6 @@ bool roster_check(const Roster *roster, char *error, int size) {
     return true;
 }
 
-// The lookup sheet keeps names as letters and digits only: "O'Neil, Joe" -> "ONeilJoe".
-// Bytes of UTF-8 characters (accents) are kept.
 void roster_name(const Athlete *athlete, char *out, int size) {
     int length = 0;
     for (const char *c = athlete->name; *c != '\0' && length < size - 1; c++) {

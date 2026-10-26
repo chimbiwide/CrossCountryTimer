@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 #include <stdatomic.h>
 #include <SDL3/SDL_thread.h>
 #include "raylib.h"
@@ -14,7 +13,6 @@
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"
 
-// pages are rendered at this resolution before they are cut into strips
 #define DPI 200
 
 #define MODEL_PATH RP_MODEL_DIR "/" RP_MODEL_FILE
@@ -24,28 +22,17 @@ enum { STAGE_IDLE, STAGE_LOADING, STAGE_READING };
 
 typedef struct {
     char pdf_path[1024];
-    bool verbose;               // the command line prints what the model read
     Roster roster;
     atomic_int stage;
     atomic_int page;
     atomic_int pages;
-    atomic_bool stop;           // the window is closing
+    atomic_bool stop;
     bool ok;
     char message[1280];
 } Job;
 
 static Vlm vlm;
 static bool vlm_loaded = false;
-static const char *model_path = MODEL_PATH;
-static const char *mmproj_path = MMPROJ_PATH;
-static int threads = 0;
-
-// raylib's GetTime() only runs once a window is open, and the command line has none
-static double now(void) {
-    struct timespec ts;
-    clock_gettime(CLOCK_MONOTONIC, &ts);
-    return ts.tv_sec + ts.tv_nsec / 1e9;
-}
 
 // Reads every strip of every page into job->roster and checks the result.
 // All pages are cut into strips first, so the model can read READ_GROUP
@@ -96,29 +83,20 @@ static bool parse_pdf(Job *job) {
         atomic_store(&job->page, page_of[first]);
         int count = total - first;
         if (count > READ_GROUP) count = READ_GROUP;
-        double start = now();
         int strips_read = vlm_read(&vlm, strips + first, count, texts, sizeof(text_space[0]));
-        if (job->verbose) printf("--- %d strips in %.1f s\n", count, now() - start);
         for (int i = 0; i < count && ok; i++) {
-            int strip = first + i;
-            int page = page_of[strip];
-            int part = 1;
-            while (strip - part >= 0 && page_of[strip - part] == page) part++;
             if (i == strips_read) {
+                int strip = first + i;
+                int page = page_of[strip];
+                int part = 1;
+                while (strip - part >= 0 && page_of[strip - part] == page) part++;
                 snprintf(job->message, sizeof(job->message), "The model could not read page %d (part %d)",
                          page + 1, part);
-                if (job->verbose) printf("--- page %d, part %d failed after:\n%s\n", page + 1, part, texts[i]);
                 ok = false;
                 break;
             }
-            int unread = roster_add_text(&job->roster, texts[i]);
-            if (job->verbose) {
-                printf("--- page %d, part %d (%dx%d): lowest token lead %.2f, %d unreadable lines\n%s\n",
-                       page + 1, part, strips[strip].width, strips[strip].height, vlm.lowest_lead[i], unread,
-                       texts[i]);
-            }
+            roster_add_text(&job->roster, texts[i]);
         }
-        if (job->verbose) fflush(stdout);
     }
     atomic_store(&job->page, pdf.pages);
     for (int i = 0; i < total; i++) crop_free(&strips[i]);
@@ -135,11 +113,10 @@ static int parse_thread(void *arg) {
     job->ok = false;
     if (!vlm_loaded) {
         atomic_store(&job->stage, STAGE_LOADING);
-        if (threads <= 0) threads = vlm_threads();
-        vlm_loaded = vlm_load(&vlm, model_path, mmproj_path, threads);
+        vlm_loaded = vlm_load(&vlm, MODEL_PATH, MMPROJ_PATH, vlm_threads());
         if (!vlm_loaded) {
             vlm_free(&vlm);
-            snprintf(job->message, sizeof(job->message), "Could not load the model %s", model_path);
+            snprintf(job->message, sizeof(job->message), "Could not load the model %s", MODEL_PATH);
         }
     }
     vlm.stop = &job->stop;
@@ -148,42 +125,8 @@ static int parse_thread(void *arg) {
     return 0;
 }
 
-// RosterParser <roster.pdf> <index.xlsx> [model.gguf mmproj.gguf [threads]]
-// No window; prints what the model read.
-static int run_command_line(const char *pdf_path, const char *xlsx_path) {
-    static Job job = {0};
-    snprintf(job.pdf_path, sizeof(job.pdf_path), "%s", pdf_path);
-    job.verbose = true;
-
-    double start = now();
-    parse_thread(&job);
-    printf("--- %.1f s in total\n", now() - start);
-    if (!job.ok) {
-        printf("Failed: %s\n", job.message);
-        vlm_free(&vlm);
-        return 1;
-    }
-    if (!roster_write_xlsx(&job.roster, xlsx_path)) {
-        printf("Could not write %s\n", xlsx_path);
-        vlm_free(&vlm);
-        return 1;
-    }
-    printf("Wrote %d athletes to %s\n", job.roster.count, xlsx_path);
-    vlm_free(&vlm);
-    return 0;
-}
-
-int main(int argc, char *argv[])
+int main(void)
 {
-    if (argc >= 3) {
-        if (argc >= 5) {
-            model_path = argv[3];
-            mmproj_path = argv[4];
-        }
-        if (argc >= 6) threads = atoi(argv[5]);
-        return run_command_line(argv[1], argv[2]);
-    }
-
     InitWindow(1280, 720, "Roster Parser");
     SetTargetFPS(60);
 

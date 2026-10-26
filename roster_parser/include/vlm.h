@@ -7,7 +7,6 @@
 #include <stdatomic.h>
 #include <stdbool.h>
 
-// Strips the model reads at the same time
 #define READ_GROUP 4
 
 typedef struct {
@@ -18,7 +17,6 @@ typedef struct {
     int vocab_size;
     struct llama_batch batch;
     char prompt[256];
-    float lowest_lead[READ_GROUP];  // per strip of the last read: the least certain token, how far it beat the runner-up, in logits
     const atomic_bool *stop;    // another thread sets it to cut a read short
 } Vlm;
 

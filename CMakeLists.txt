@@ -176,13 +176,13 @@ if(CCT_WITH_WHISPER)
     target_link_libraries(CrossCountryTimer PRIVATE whisper)
     target_compile_definitions(CrossCountryTimer PRIVATE CCT_HAS_WHISPER)
 
-    # #embed needs the tiny.en model in models/ before the build. The
+    # #embed needs the base.en model in models/ before the build. The
     # download is skipped when the file is already there with this SHA1 and
     # repeated when it is not. The hash is the one whisper.cpp lists in
     # third_party/whisper.cpp/models/README.md.
     file(DOWNLOAD
-        https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-tiny.en.bin
-        ${CMAKE_SOURCE_DIR}/models/ggml-tiny.en.bin
-        EXPECTED_HASH SHA1=c78c86eb1a8faa21b369bcd33207cc90d64ae9df
+        https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.en.bin
+        ${CMAKE_SOURCE_DIR}/models/ggml-base.en.bin
+        EXPECTED_HASH SHA1=137c40403d78fd54d454da0f9bd998f78703390c
         SHOW_PROGRESS)
 endif()

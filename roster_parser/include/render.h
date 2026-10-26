@@ -3,17 +3,17 @@
 
 #include <stdbool.h>
 
-#define MAX_CROPS 16        // strips a page can be cut into
+#define MAX_CROPS 16
 
 typedef struct {
     int width;
     int height;
-    unsigned char *rgb;     // width * height * 3 bytes
+    unsigned char *rgb;
 } Crop;
 
 typedef struct {
     void *document;
-    void *data;             // the file's bytes, pdfium reads them until render_close()
+    void *data;
     int pages;
 } Pdf;
 

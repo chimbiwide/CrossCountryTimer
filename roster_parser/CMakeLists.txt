@@ -1,7 +1,3 @@
-# RosterParser: reads the league roster PDF with a vision model (llama.cpp,
-# CPU only) and writes the "Student Lookup" sheet the timer loads from
-# data/index.xlsx.
-#
 # raylib, raygui, xlsxio, zlib and expat come from the timer's third_party/.
 # llama.cpp and SDL are the parser's own plain clones in third_party/, so its
 # SDL is independent of the timer's:
@@ -195,8 +191,10 @@ target_compile_definitions(RosterParser PRIVATE
     RP_MMPROJ_FILE="${RP_MMPROJ_FILE}"
 )
 target_link_libraries(RosterParser PRIVATE raylib xlsxio_write xlsxio_read llama mtmd pdfium SDL3::SDL3)
-# Windows looks for pdfium.dll next to the exe
+# GUI subsystem: double-clicking the exe opens the app window only.
+# Windows looks for pdfium.dll next to the exe.
 if(WIN32)
+    set_target_properties(RosterParser PROPERTIES WIN32_EXECUTABLE TRUE)
     add_custom_command(TARGET RosterParser POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PDFIUM_DIR}/bin/pdfium.dll $<TARGET_FILE_DIR:RosterParser>)
 endif()

@@ -1,6 +1,5 @@
 #include <vlm.h>
 #include <mtmd-helper.h>
-#include <math.h>
 #include <stdio.h>
 #include <string.h>
 #ifdef _WIN32
@@ -9,34 +8,26 @@
 #include <unistd.h>
 #endif
 
-// Context cells one strip may use: its image (under 400 for a strip of
-// MAX_PIXELS), the prompt and the text read from it
 #define STRIP_CONTEXT 1024
-// More than the image tokens of the biggest strip
+
 #define BATCH_SIZE 512
 
-// GLM-OCR's own chat format with its plain-text task. The model writes the
-// lines as printed ("12. LaMay, Ethan 1092 M 8"); roster_add_text() reads them.
 #define PROMPT_START "[gMASK]<sop><|user|>\n"
 #define PROMPT_END "Text Recognition:<|assistant|>"
 
-// One strip being read: its text so far, and the token to feed next
 typedef struct {
     char *text;
     int size;
     int length;
     int line_start;
     int last_row;
-    llama_pos past;     // position of the next token; an image takes fewer positions than cells
-    int cells;          // context cells used: the image, the prompt and the text
+    llama_pos past;
+    int cells;
     llama_token token;
     bool reading;
     bool failed;
 } Reader;
 
-// One thread per core: half the logical CPUs on machines with hyperthreading.
-// At most 8: on a desktop with 8 fast and 8 slow cores, 12 threads took 87 s
-// where 8 took 66 s, the extra ones waiting on the slow cores.
 int vlm_threads(void) {
 #ifdef _WIN32
     SYSTEM_INFO info;
@@ -95,30 +86,16 @@ bool vlm_load(Vlm *vlm, const char *model_path, const char *mmproj_path, int thr
     return true;
 }
 
-// Greedy: always the model's favourite token, so the same strips always give
-// the same text. lead is how far it beat the runner-up, in logits. index is
-// the token's place in the last batch, -1 for its last token.
-static llama_token pick_token(Vlm *vlm, int index, float *lead) {
+// Greedy decoding
+static llama_token pick_token(Vlm *vlm, int index) {
     const float *logits = llama_get_logits_ith(vlm->context, index);
     int best = 0;
-    int second = 1;
-    if (logits[second] > logits[best]) {
-        best = 1;
-        second = 0;
+    for (int i = 1; i < vlm->vocab_size; i++) {
+        if (logits[i] > logits[best]) best = i;
     }
-    for (int i = 2; i < vlm->vocab_size; i++) {
-        if (logits[i] > logits[best]) {
-            second = best;
-            best = i;
-        }
-        else if (logits[i] > logits[second]) second = i;
-    }
-    *lead = logits[best] - logits[second];
     return best;
 }
 
-// Whether the line at out + start, length bytes long, is already among the
-// complete lines before it.
 static bool repeated_line(const char *out, int start, int length) {
     int seen = 0;
     while (seen < start) {
@@ -203,7 +180,6 @@ int vlm_read(Vlm *vlm, const Crop *crops, int count, char *texts[], int size) {
         reader->text = texts[i];
         reader->size = size;
         reader->text[0] = '\0';
-        vlm->lowest_lead[i] = INFINITY;
 
         mtmd_bitmap *bitmap = mtmd_bitmap_init(crops[i].width, crops[i].height, crops[i].rgb);
         mtmd_input_chunks *chunks = mtmd_input_chunks_init();
@@ -223,9 +199,7 @@ int vlm_read(Vlm *vlm, const Crop *crops, int count, char *texts[], int size) {
         }
 
         // the logits are this strip's until the next strip's image goes in
-        float lead = 0.0f;
-        llama_token token = pick_token(vlm, -1, &lead);
-        vlm->lowest_lead[i] = lead;
+        llama_token token = pick_token(vlm, -1);
         reader->reading = true;
         take_token(vlm, reader, token);
     }
@@ -255,9 +229,7 @@ int vlm_read(Vlm *vlm, const Crop *crops, int count, char *texts[], int size) {
         if (llama_decode(vlm->context, vlm->batch) != 0) return first_unread(readers, count);
         for (int i = 0; i < count; i++) {
             if (!readers[i].reading) continue;
-            float lead = 0.0f;
-            llama_token token = pick_token(vlm, slot[i], &lead);
-            if (lead < vlm->lowest_lead[i]) vlm->lowest_lead[i] = lead;
+            llama_token token = pick_token(vlm, slot[i]);
             take_token(vlm, &readers[i], token);
         }
     }

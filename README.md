@@ -6,6 +6,28 @@ The cross country timer app built with rayGui
 
 ---
 
+## Workflow
+
+```mermaid
+flowchart LR
+    subgraph before["Before the race"]
+        direction TB
+        A["Roster PDF"] --> B["Roster parser<br>GLM-OCR reads it"] --> C["Roster spreadsheet<br>bib · name · school"]
+    end
+    subgraph during["During the race"]
+        direction TB
+        D["Start the clock"] --> E["Runner finishes<br>bumper saves time"] --> F["Hold trigger,<br>say the bib"] --> G["whisper.cpp<br>speech → bib number"] --> H["Look up bib<br>fill in name + school"]
+        H -->|next runner| E
+    end
+    subgraph after["After the race"]
+        direction TB
+        I["Stop the clock"] --> J["Export to PDF<br>team scoring"] --> K["Results PDFs<br>overall + each division"]
+    end
+    before --> during --> after
+```
+
+---
+
 ## Build
 
 Requires CMake 3.22+, C23 compiler(gcc 16), and (by default) a C++ compiler for whisper.cpp.

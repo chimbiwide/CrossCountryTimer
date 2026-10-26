@@ -5,6 +5,7 @@
 
 int init_score_file(const char *path);
 int write_laps(const char *path, int lap_count, char *laps[]);
+const char *set_platform_path();
 int scoreboard(void);
 
 #endif

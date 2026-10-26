@@ -1,3 +1,4 @@
+#include "SDL3/SDL_platform.h"
 #include <scoreboard.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -93,6 +94,16 @@ static int read_laps(char *path, int row_size, char *laps[]) {
 cleanup: 
     fclose(file);
     return -1;
+}
+
+const char *set_platform_path() {
+    const char *path = SDL_GetPlatform();
+    if (strcmp(path, "Windows") == 0) {
+        return "%sCrossCountryTimer.exe";
+    }
+    else {
+        return "%sCrossCountryTimer";
+    }
 }
 
 int scoreboard(void) {

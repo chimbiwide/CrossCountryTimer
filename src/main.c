@@ -131,7 +131,8 @@ int main(int argc, char *argv[])
 
     // scoreboard
     char score_path[1024];
-    snprintf(score_path, sizeof(score_path), "%sCrossCountryTimer", SDL_GetBasePath());
+    const char *exec_path = set_platform_path();
+    snprintf(score_path, sizeof(score_path), exec_path, SDL_GetBasePath());
     const char *args[] = {score_path, "--scoreboard", NULL};
     init_score_file(SCORE_PATH);
 

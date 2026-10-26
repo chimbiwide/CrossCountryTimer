@@ -75,10 +75,10 @@ int main(int argc, char *argv[])
     // Lists
     static char lap_text[MAX_RUNNER][256];
     static char *laps[MAX_RUNNER];
-    int lap_count;
-    int scroll;
-    int active;
-    int focused;
+    int lap_count = 0;
+    int scroll = 0;
+    int active = -1;
+    int focused = -1;
 
     static Time lap_times[MAX_RUNNER];
     static Student students[MAX_RUNNER];
@@ -204,6 +204,9 @@ int main(int argc, char *argv[])
         float listH = GetScreenHeight() / 2.0f;
         float listX = (((float)GetScreenWidth() - listW) / 2.0f);
         float listY = GetScreenHeight() / 2.0f;
+        // rows that fit in the list, counted the same way GuiListViewEx does
+        int visible = (int)listH / (GuiGetStyle(LISTVIEW, LIST_ITEMS_HEIGHT) + GuiGetStyle(LISTVIEW, LIST_ITEMS_SPACING));
+        if (visible < 1) visible = 1;
 
         int butW = 120;
         int butH = 50;
@@ -280,9 +283,6 @@ int main(int argc, char *argv[])
             write_laps(SCORE_PATH, lap_count, laps);
 
             // scroll to bottom once per update
-            int row = GuiGetStyle(LISTVIEW, LIST_ITEMS_HEIGHT) + GuiGetStyle(LISTVIEW, LIST_ITEMS_SPACING);
-            int visible = (int)listH / row;
-            if ((visible) < 1) visible = 1;
             if (lap_count > visible) scroll = lap_count - visible;
             else scroll = 0;
         }
@@ -337,7 +337,12 @@ int main(int argc, char *argv[])
             bibEdit = !bibEdit;
         }
 
-        dpad_scroll(&padState, &lap_count, &scroll, &active);
+        // GuiListViewEx resets an out of range scroll to the top, so clamp it first
+        int maxScroll = lap_count - visible;
+        if (maxScroll < 0) maxScroll = 0;
+        if (scroll > maxScroll) scroll = maxScroll;
+
+        dpad_scroll(&padState, &lap_count, visible, &scroll, &active);
 
         // the grid list
         GuiListViewEx((Rectangle){listX, listY, listW, listH},
@@ -362,13 +367,6 @@ int main(int argc, char *argv[])
             write_laps(SCORE_PATH, lap_count, laps);
             if (currentActive < currentIndex) currentIndex--;
             active = -1;
-
-            int row = GuiGetStyle(LISTVIEW, LIST_ITEMS_HEIGHT) + GuiGetStyle(LISTVIEW, LIST_ITEMS_SPACING);
-            int visible =(int)listH / row;
-            if (visible < 1) visible = 1;
-            int maxScroll = lap_count -visible;
-            if (maxScroll < 0) maxScroll = 0;
-            if (scroll > maxScroll) scroll = maxScroll;
         }
 
         // opens a pop-up window

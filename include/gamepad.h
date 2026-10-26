@@ -26,6 +26,6 @@ typedef struct {
 
 void zero_state(GamepadState *pad);
 void update_pad_state(int gamepad, GamepadState *pad);
-void dpad_scroll(GamepadState *pad, int *lap_count, int *scroll, int *active);
+void dpad_scroll(GamepadState *pad, int *lap_count, int visible, int *scroll, int *active);
 
 #endif

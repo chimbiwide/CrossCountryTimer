@@ -143,7 +143,7 @@ int main(void)
     bool busy = false;
     bool parsed = false;
 
-    char pdf_path[1024] = "";
+    char pdf_path[1024] = "/data/roster.pdf";
     char xlsx_path[1024] = "index.xlsx";
     bool pdf_edit = false;
     bool xlsx_edit = false;

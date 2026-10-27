@@ -114,6 +114,24 @@ cmake -S . -B build -DCCT_WITH_SDL=OFF
 cmake --build build
 ```
 
+### GLM-OCR model
+
+The roster parser reads roster PDFs with GLM-OCR. It needs two files in `models/`: `GLM-OCR.Q4_K_M.gguf` and its vision part, `mmproj-GLM-OCR-Q8_0.gguf` (about 1 GB together). From the repo root:
+
+```bash
+./download-glm-ocr.sh
+```
+
+On Windows, in PowerShell:
+
+```powershell
+.\download-glm-ocr.ps1
+```
+
+If PowerShell blocks the script, run it as `powershell -ExecutionPolicy Bypass -File .\download-glm-ocr.ps1`.
+
+Both scripts skip a file that is already there and check each download against its SHA256.
+
 ---
 
 ### Division

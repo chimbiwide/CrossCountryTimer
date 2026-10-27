@@ -4,5 +4,7 @@ compile_commands.json
 *.o
 *.a
 models/*.bin
+models/*.gguf
 *.csv
 *.xlsx
+*.pdf

@@ -98,7 +98,30 @@ The preset is a Release build and writes `build\CrossCountryTimer.exe`. Start it
 .\build\CrossCountryTimer.exe
 ```
 
-MinGW's runtime DLLs (`libgcc_s_seh-1.dll`, `libstdc++-6.dll`, `libwinpthread-1.dll`) have to be on `PATH`. It will work if launched from a terminal where `gcc` is available.
+MinGW's runtime (libgcc, libstdc++, winpthread) is linked into the exe, so it needs no MinGW DLLs on `PATH`.
+
+#### Portable copy
+
+To run the timer and the roster parser on another PC, build both and collect them into one folder:
+
+```powershell
+.\package.ps1
+```
+
+This writes `dist\CrossCountryTimer\`:
+
+```
+CrossCountryTimer.exe
+RosterParser.exe
+pdfium.dll
+data\index.xlsx                  (copied from data\ if it is there)
+models\GLM-OCR.Q4_K_M.gguf
+models\mmproj-GLM-OCR-Q8_0.gguf
+```
+
+Copy the whole folder over and double-click either exe. All paths are relative to the working directory, which is the exe's folder when it is double-clicked. The font and the whisper model are built into `CrossCountryTimer.exe`.
+
+whisper.cpp and llama.cpp are built without `-march=native`, for a fixed AVX2 baseline. The other PC needs an AVX2 CPU: Intel Haswell (2013) / AMD Zen or newer.
 
 Default build type on Linux is Debug. For a Release build:
 

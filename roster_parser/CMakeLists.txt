@@ -4,7 +4,7 @@
 #   git clone --depth 1 --branch b11783 https://github.com/ggml-org/llama.cpp.git third_party/llama.cpp
 #   git clone --depth 1 --branch release-3.4.18 https://github.com/libsdl-org/SDL.git third_party/SDL
 # Configuring downloads pdfium (prebuilt, renders the PDF pages) into
-# third_party/ and the model into models/.
+# third_party/ and the model into the repo root's models/.
 cmake_minimum_required(VERSION 3.22)
 
 set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
@@ -117,6 +117,12 @@ set(GGML_VULKAN OFF CACHE BOOL "" FORCE)
 set(GGML_METAL OFF CACHE BOOL "" FORCE)
 set(GGML_BLAS OFF CACHE BOOL "" FORCE)
 set(GGML_OPENMP OFF CACHE BOOL "" FORCE)
+# no -march=native, so the exe runs on other PCs: a fixed AVX2 baseline
+# (Intel Haswell / AMD Zen and later) instead
+set(GGML_NATIVE OFF CACHE BOOL "" FORCE)
+foreach(ggml_isa IN ITEMS SSE42 AVX AVX2 BMI2 FMA F16C)
+    set(GGML_${ggml_isa} ON CACHE BOOL "" FORCE)
+endforeach()
 set(LLAMA_BUILD_COMMON OFF CACHE BOOL "" FORCE)
 set(LLAMA_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(LLAMA_BUILD_TOOLS OFF CACHE BOOL "" FORCE)
@@ -169,9 +175,9 @@ set(RP_MODEL_SHA256 bb27f2451f0f1b13491e04e0664cd946438a4677c32acf8ecfef79f68e86
 set(RP_MMPROJ_URL https://huggingface.co/ggml-org/GLM-OCR-GGUF/resolve/main)
 set(RP_MMPROJ_FILE mmproj-GLM-OCR-Q8_0.gguf)
 set(RP_MMPROJ_SHA256 9c4b58e33e316ed142eb5dcb41abec3844d3e6e5dc361ffb782c3fa9d175141f)
-file(DOWNLOAD ${RP_MODEL_URL}/${RP_MODEL_FILE} ${CMAKE_CURRENT_SOURCE_DIR}/models/${RP_MODEL_FILE}
+file(DOWNLOAD ${RP_MODEL_URL}/${RP_MODEL_FILE} ${CCT_ROOT}/models/${RP_MODEL_FILE}
     EXPECTED_HASH SHA256=${RP_MODEL_SHA256} SHOW_PROGRESS)
-file(DOWNLOAD ${RP_MMPROJ_URL}/${RP_MMPROJ_FILE} ${CMAKE_CURRENT_SOURCE_DIR}/models/${RP_MMPROJ_FILE}
+file(DOWNLOAD ${RP_MMPROJ_URL}/${RP_MMPROJ_FILE} ${CCT_ROOT}/models/${RP_MMPROJ_FILE}
     EXPECTED_HASH SHA256=${RP_MMPROJ_SHA256} SHOW_PROGRESS)
 
 add_executable(RosterParser
@@ -186,7 +192,6 @@ add_executable(RosterParser
 set_target_properties(RosterParser PROPERTIES C_STANDARD 23 C_STANDARD_REQUIRED ON)
 target_include_directories(RosterParser PRIVATE include ${CCT_ROOT}/include)
 target_compile_definitions(RosterParser PRIVATE
-    RP_MODEL_DIR="${CMAKE_CURRENT_SOURCE_DIR}/models"
     RP_MODEL_FILE="${RP_MODEL_FILE}"
     RP_MMPROJ_FILE="${RP_MMPROJ_FILE}"
 )
@@ -195,6 +200,10 @@ target_link_libraries(RosterParser PRIVATE raylib xlsxio_write xlsxio_read llama
 # Windows looks for pdfium.dll next to the exe.
 if(WIN32)
     set_target_properties(RosterParser PROPERTIES WIN32_EXECUTABLE TRUE)
+    # libgcc, libstdc++ and winpthread go into the exe, so other PCs need no MinGW DLLs
+    if(MINGW)
+        target_link_options(RosterParser PRIVATE -static)
+    endif()
     add_custom_command(TARGET RosterParser POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PDFIUM_DIR}/bin/pdfium.dll $<TARGET_FILE_DIR:RosterParser>)
 endif()

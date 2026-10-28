@@ -15,8 +15,9 @@
 
 #define DPI 200
 
-#define MODEL_PATH RP_MODEL_DIR "/" RP_MODEL_FILE
-#define MMPROJ_PATH RP_MODEL_DIR "/" RP_MMPROJ_FILE
+// relative path
+#define MODEL_PATH "models/" RP_MODEL_FILE
+#define MMPROJ_PATH "models/" RP_MMPROJ_FILE
 
 enum { STAGE_IDLE, STAGE_LOADING, STAGE_READING };
 

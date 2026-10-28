@@ -155,6 +155,10 @@ add_executable(CrossCountryTimer
 if(WIN32)
     set_target_properties(CrossCountryTimer PROPERTIES WIN32_EXECUTABLE TRUE)
     target_sources(CrossCountryTimer PRIVATE data/app.rc)
+    # libgcc, libstdc++ and winpthread go into the exe, so other PCs need no MinGW DLLs
+    if(MINGW)
+        target_link_options(CrossCountryTimer PRIVATE -static)
+    endif()
 endif()
 target_include_directories(CrossCountryTimer PRIVATE
     ${CMAKE_SOURCE_DIR}/include
@@ -168,6 +172,14 @@ if(CCT_WITH_WHISPER)
     set(WHISPER_BUILD_TESTS OFF CACHE BOOL "" FORCE)
     set(WHISPER_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
     set(WHISPER_BUILD_SERVER OFF CACHE BOOL "" FORCE)
+    # no -march=native, so the exe runs on other PCs: a fixed AVX2 baseline
+    # (Intel Haswell / AMD Zen and later) instead
+    set(GGML_NATIVE OFF CACHE BOOL "" FORCE)
+    foreach(ggml_isa IN ITEMS SSE42 AVX AVX2 BMI2 FMA F16C)
+        set(GGML_${ggml_isa} ON CACHE BOOL "" FORCE)
+    endforeach()
+    # ggml's own thread pool instead of OpenMP, whose libgomp DLL other PCs lack
+    set(GGML_OPENMP OFF CACHE BOOL "" FORCE)
     add_subdirectory(third_party/whisper.cpp EXCLUDE_FROM_ALL)
     # force ggml to be optimized regardless to build type (debug/release)
     foreach(whisper_target IN ITEMS whisper ggml ggml-base ggml-cpu)

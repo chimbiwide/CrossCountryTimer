@@ -1,10 +1,5 @@
-# raylib, raygui, xlsxio, zlib and expat come from the timer's third_party/.
-# llama.cpp and SDL are the parser's own plain clones in third_party/, so its
-# SDL is independent of the timer's:
-#   git clone --depth 1 --branch b11783 https://github.com/ggml-org/llama.cpp.git third_party/llama.cpp
-#   git clone --depth 1 --branch release-3.4.18 https://github.com/libsdl-org/SDL.git third_party/SDL
-# Configuring downloads pdfium (prebuilt, renders the PDF pages) into
-# third_party/ and the model into the repo root's models/.
+# Everything but pdfium comes from the timer's third_party/.
+# Configuring downloads pdfium into third_party/ here and the model into ../models/.
 cmake_minimum_required(VERSION 3.22)
 
 set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
@@ -35,17 +30,16 @@ if(NOT WIN32)
     find_package(Threads REQUIRED)
 endif()
 
-# SDL runs the parse on a worker thread. Only its core (threads) is built:
-# the window comes from raylib.
+# SDL only for threads; the window is raylib's
 set(SDL_SHARED OFF CACHE BOOL "Build SDL shared library" FORCE)
 set(SDL_STATIC ON CACHE BOOL "Build SDL static library" FORCE)
 set(SDL_TEST_LIBRARY OFF CACHE BOOL "Build SDL test library" FORCE)
 foreach(sdl_subsystem IN ITEMS AUDIO VIDEO JOYSTICK HAPTIC HIDAPI POWER SENSOR DIALOG TRAY)
     set(SDL_${sdl_subsystem} OFF CACHE BOOL "" FORCE)
 endforeach()
-# without video SDL needs no X11 or Wayland, which it only allows when told
+# no video, so SDL may skip X11/Wayland
 set(SDL_UNIX_CONSOLE_BUILD ON CACHE BOOL "" FORCE)
-add_subdirectory(third_party/SDL SDL EXCLUDE_FROM_ALL)
+add_subdirectory(${CCT_ROOT}/third_party/SDL SDL EXCLUDE_FROM_ALL)
 
 # raylib on its GLFW backend: the parser has no gamepad
 set(BUILD_EXAMPLES OFF CACHE BOOL "Build raylib examples" FORCE)
@@ -59,7 +53,7 @@ list(APPEND CMAKE_MODULE_PATH "${CCT_ROOT}/third_party/raylib/cmake")
 include(CompilerFlags)
 add_subdirectory(${CCT_ROOT}/third_party/raylib/src raylib)
 
-# xlsxio and what it needs, built the same way as in the timer
+# xlsxio, as in the timer
 set(ZLIB_BUILD_SHARED OFF CACHE BOOL "" FORCE)
 set(ZLIB_BUILD_STATIC ON CACHE BOOL "" FORCE)
 set(ZLIB_BUILD_TESTING OFF CACHE BOOL "" FORCE)
@@ -111,14 +105,13 @@ if(NOT WIN32)
     target_link_libraries(xlsxio_write PUBLIC Threads::Threads)
 endif()
 
-# llama.cpp, CPU only: just libllama and the vision library (mtmd)
+# llama.cpp, CPU only: libllama and mtmd (vision)
 set(GGML_CUDA OFF CACHE BOOL "" FORCE)
 set(GGML_VULKAN OFF CACHE BOOL "" FORCE)
 set(GGML_METAL OFF CACHE BOOL "" FORCE)
 set(GGML_BLAS OFF CACHE BOOL "" FORCE)
 set(GGML_OPENMP OFF CACHE BOOL "" FORCE)
-# no -march=native, so the exe runs on other PCs: a fixed AVX2 baseline
-# (Intel Haswell / AMD Zen and later) instead
+# fixed AVX2 baseline instead of -march=native, so the exe runs on other PCs
 set(GGML_NATIVE OFF CACHE BOOL "" FORCE)
 foreach(ggml_isa IN ITEMS SSE42 AVX AVX2 BMI2 FMA F16C)
     set(GGML_${ggml_isa} ON CACHE BOOL "" FORCE)
@@ -132,12 +125,12 @@ set(LLAMA_BUILD_APP OFF CACHE BOOL "" FORCE)
 set(LLAMA_BUILD_MTMD ON CACHE BOOL "" FORCE)
 set(LLAMA_OPENSSL OFF CACHE BOOL "" FORCE)
 set(MTMD_VIDEO OFF CACHE BOOL "" FORCE)
-add_subdirectory(third_party/llama.cpp EXCLUDE_FROM_ALL)
-# the model is unusably slow when built without optimization, so it always is
+add_subdirectory(${CCT_ROOT}/third_party/llama.cpp llama.cpp EXCLUDE_FROM_ALL)
+# unusably slow unoptimized, so -O3 even in Debug
 foreach(llama_target IN ITEMS ggml ggml-base ggml-cpu llama mtmd)
     target_compile_options(${llama_target} PRIVATE $<$<CONFIG:Debug>:-O3>)
 endforeach()
-# raylib and mtmd both compile stb_image; mtmd's copy is made private so the two don't collide
+# raylib also compiles stb_image; mtmd's copy stays private
 target_compile_definitions(mtmd PRIVATE STB_IMAGE_STATIC)
 
 # pdfium renders the pages. Prebuilt by https://github.com/bblanchon/pdfium-binaries
@@ -166,9 +159,7 @@ else()
     set_target_properties(pdfium PROPERTIES IMPORTED_LOCATION ${PDFIUM_DIR}/lib/libpdfium.so)
 endif()
 
-# The model: GLM-OCR's text part at Q4_K_M (smaller and faster on a CPU than
-# Q8_0, and it still reads every row), and its vision part at Q8_0. CMake
-# skips a download when the file is already there with this hash.
+# GLM-OCR: text at Q4_K_M (faster on a CPU than Q8_0, still reads every row), vision at Q8_0
 set(RP_MODEL_URL https://huggingface.co/mradermacher/GLM-OCR-GGUF/resolve/main)
 set(RP_MODEL_FILE GLM-OCR.Q4_K_M.gguf)
 set(RP_MODEL_SHA256 bb27f2451f0f1b13491e04e0664cd946438a4677c32acf8ecfef79f68e862de1)
@@ -191,16 +182,21 @@ add_executable(RosterParser
 # raylib's CompilerFlags turns the default down to C99; font.c's #embed needs C23
 set_target_properties(RosterParser PROPERTIES C_STANDARD 23 C_STANDARD_REQUIRED ON)
 target_include_directories(RosterParser PRIVATE include ${CCT_ROOT}/include)
+# raygui as a system header, so its warnings stay out of the build
+target_include_directories(RosterParser SYSTEM PRIVATE ${CCT_ROOT}/third_party/raygui)
 target_compile_definitions(RosterParser PRIVATE
     RP_MODEL_FILE="${RP_MODEL_FILE}"
     RP_MMPROJ_FILE="${RP_MMPROJ_FILE}"
 )
+# warnings for our sources only
+if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(RosterParser PRIVATE -Wall -Wextra)
+endif()
 target_link_libraries(RosterParser PRIVATE raylib xlsxio_write xlsxio_read llama mtmd pdfium SDL3::SDL3)
-# GUI subsystem: double-clicking the exe opens the app window only.
-# Windows looks for pdfium.dll next to the exe.
+# no console window on Windows; pdfium.dll goes next to the exe
 if(WIN32)
     set_target_properties(RosterParser PROPERTIES WIN32_EXECUTABLE TRUE)
-    # libgcc, libstdc++ and winpthread go into the exe, so other PCs need no MinGW DLLs
+    # static MinGW runtime, so other PCs need no DLLs
     if(MINGW)
         target_link_options(RosterParser PRIVATE -static)
     endif()

@@ -9,3 +9,4 @@ models/*.gguf
 *.csv
 *.xlsx
 *.pdf
+*.gguf

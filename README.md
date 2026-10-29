@@ -32,7 +32,7 @@ flowchart LR
 
 Requires CMake 3.22+, C23 compiler(gcc 16), and (by default) a C++ compiler for whisper.cpp.
 
-`third_party/raylib`, `third_party/SDL`, `third_party/whisper.cpp`, `third_party/xlsxio`, `third_party/zlib`, and `third_party/expat` are git submodules. After a clone:
+`third_party/raylib`, `third_party/SDL`, `third_party/whisper.cpp`, `third_party/llama.cpp`, `third_party/xlsxio`, `third_party/zlib`, and `third_party/expat` are git submodules. After a clone:
 
 ```bash
 git submodule update --init --recursive
@@ -165,9 +165,3 @@ Both scripts skip a file that is already there and check each download against i
 - Middleman
 
 New column for divsion: F, V, J, M
-
----
-
-### TODO
-
-add the ability to choose mic in the settings panel

@@ -34,13 +34,13 @@ void sync_row(Row stats[], Time lap_times[], Student students[], int size) {
 void write_row(const Time *time, const Student *student, char *buffer, int buff_size, int rank) {
     if (student->name[0] != '\0') {
         snprintf(buffer, (size_t)buff_size,
-                 "Rank: %d | Time: %02d:%02d:%02d.%03d | Bib: %ld | %s | %s | %s",
+                 "Rank: %d | Time: %02d:%02d:%02d.%03d | Bib: %lld | %s | %s | %s",
                  rank + 1, time->h, time->min, time->s, time->ms,
-                 student->bib, student->name, student->school, student->division);
+                 (long long)student->bib, student->name, student->school, student->division);
     } else if (student->bib > 0) {
         snprintf(buffer, (size_t)buff_size,
-                 "Rank: %d | Time: %02d:%02d:%02d.%03d | Bib: %ld",
-                 rank + 1, time->h, time->min, time->s, time->ms, student->bib);
+                 "Rank: %d | Time: %02d:%02d:%02d.%03d | Bib: %lld",
+                 rank + 1, time->h, time->min, time->s, time->ms, (long long)student->bib);
     } else {
         snprintf(buffer, (size_t)buff_size,
                  "Rank: %d | Time: %02d:%02d:%02d.%03d",

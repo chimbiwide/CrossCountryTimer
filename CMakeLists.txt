@@ -38,10 +38,8 @@ endif()
 
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build static libraries" FORCE)
 set(BUILD_EXAMPLES OFF CACHE BOOL "Build raylib examples" FORCE)
-# SetGamepadVibration() only works on raylib's SDL backend; the GLFW one
-# (CCT_WITH_SDL=OFF) has no rumble. PLATFORM is forced so a build directory
-# configured before this option existed switches over instead of keeping
-# its cached GLFW setting.
+# gamepad rumble needs raylib's SDL backend. PLATFORM is FORCEd so an older
+# build directory switches over instead of keeping its cached GLFW setting.
 option(CCT_WITH_SDL "Use raylib's SDL3 backend (needed for gamepad rumble)" ON)
 if(CCT_WITH_SDL)
     set(PLATFORM SDL CACHE STRING "raylib platform" FORCE)
@@ -51,8 +49,7 @@ endif()
 set(OPENGL_VERSION OFF CACHE STRING "raylib OpenGL version")
 set(USE_EXTERNAL_GLFW OFF CACHE STRING "Use system GLFW")
 set(USE_AUDIO ON CACHE BOOL "raylib audio")
-# GLFW is only built when CCT_WITH_SDL is OFF.
-# X11/Wayland exist only on Linux. On Windows, GLFW's own options select Win32.
+# GLFW (CCT_WITH_SDL=OFF only): X11, no Wayland
 if(UNIX AND NOT APPLE)
     set(GLFW_BUILD_WAYLAND OFF CACHE BOOL "" FORCE)
     set(GLFW_BUILD_X11 ON CACHE BOOL "" FORCE)
@@ -117,8 +114,7 @@ set(SDL_SHARED OFF CACHE BOOL "Build SDL shared library" FORCE)
 set(SDL_STATIC ON CACHE BOOL "Build SDL static library" FORCE)
 set(SDL_TEST_LIBRARY OFF CACHE BOOL "Build SDL test library" FORCE)
 set(SDL_INSTALL ON CACHE BOOL "SDL install rules" FORCE)
-# X11 only, as with GLFW. XScrnSaver and XTest are not used here and
-# each would need one more -dev package.
+# X11 only; XScrnSaver and XTest would each need another -dev package
 if(UNIX AND NOT APPLE)
     set(SDL_WAYLAND OFF CACHE BOOL "" FORCE)
     set(SDL_X11_XSCRNSAVER OFF CACHE BOOL "" FORCE)
@@ -150,12 +146,11 @@ add_executable(CrossCountryTimer
     src/transcribe.c
     src/gamepad.c
 )
-# GUI subsystem: double-clicking the exe opens the app window only.
-# The .rc is the Explorer icon. windres finds the .ico beside the script.
+# no console window on Windows; app.rc is the Explorer icon
 if(WIN32)
     set_target_properties(CrossCountryTimer PROPERTIES WIN32_EXECUTABLE TRUE)
     target_sources(CrossCountryTimer PRIVATE data/app.rc)
-    # libgcc, libstdc++ and winpthread go into the exe, so other PCs need no MinGW DLLs
+    # static MinGW runtime, so other PCs need no DLLs
     if(MINGW)
         target_link_options(CrossCountryTimer PRIVATE -static)
     endif()
@@ -163,6 +158,12 @@ endif()
 target_include_directories(CrossCountryTimer PRIVATE
     ${CMAKE_SOURCE_DIR}/include
 )
+# raygui as a system header, so its warnings stay out of the build
+target_include_directories(CrossCountryTimer SYSTEM PRIVATE ${CMAKE_SOURCE_DIR}/third_party/raygui)
+# warnings for our sources only
+if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(CrossCountryTimer PRIVATE -Wall -Wextra)
+endif()
 target_link_libraries(CrossCountryTimer PRIVATE raylib pdfgen xlsxio_read xlsxio_write)
 target_link_libraries(CrossCountryTimer PRIVATE SDL3::SDL3)
 
@@ -172,26 +173,22 @@ if(CCT_WITH_WHISPER)
     set(WHISPER_BUILD_TESTS OFF CACHE BOOL "" FORCE)
     set(WHISPER_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
     set(WHISPER_BUILD_SERVER OFF CACHE BOOL "" FORCE)
-    # no -march=native, so the exe runs on other PCs: a fixed AVX2 baseline
-    # (Intel Haswell / AMD Zen and later) instead
+    # fixed AVX2 baseline instead of -march=native, so the exe runs on other PCs
     set(GGML_NATIVE OFF CACHE BOOL "" FORCE)
     foreach(ggml_isa IN ITEMS SSE42 AVX AVX2 BMI2 FMA F16C)
         set(GGML_${ggml_isa} ON CACHE BOOL "" FORCE)
     endforeach()
-    # ggml's own thread pool instead of OpenMP, whose libgomp DLL other PCs lack
+    # no OpenMP: other PCs lack libgomp
     set(GGML_OPENMP OFF CACHE BOOL "" FORCE)
     add_subdirectory(third_party/whisper.cpp EXCLUDE_FROM_ALL)
-    # force ggml to be optimized regardless to build type (debug/release)
+    # ggml is unusably slow unoptimized, so -O3 even in Debug
     foreach(whisper_target IN ITEMS whisper ggml ggml-base ggml-cpu)
         target_compile_options(${whisper_target} PRIVATE $<$<CONFIG:Debug>:-O3>)
     endforeach()
     target_link_libraries(CrossCountryTimer PRIVATE whisper)
     target_compile_definitions(CrossCountryTimer PRIVATE CCT_HAS_WHISPER)
 
-    # #embed needs the base.en model in models/ before the build. The
-    # download is skipped when the file is already there with this SHA1 and
-    # repeated when it is not. The hash is the one whisper.cpp lists in
-    # third_party/whisper.cpp/models/README.md.
+    # the whisper model transcribe.c #embeds; the SHA1 is from whisper.cpp's models/README.md
     file(DOWNLOAD
         https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.en.bin
         ${CMAKE_SOURCE_DIR}/models/ggml-base.en.bin

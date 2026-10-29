@@ -1,4 +1,5 @@
 -Iinclude
+-Ithird_party/raygui
 -Ithird_party/raylib/src
 -Ithird_party/pdfgen
 -Ithird_party/xlsxio/include

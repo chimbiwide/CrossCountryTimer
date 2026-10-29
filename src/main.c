@@ -241,6 +241,8 @@ int main(int argc, char *argv[])
         }
 
         // the timer
+        // read the time after every frame
+        if (timerStarted) read_time(&timer, &time, GetTime());
         GuiSetStyle(DEFAULT, TEXT_SIZE, 125);
         GuiLabel((Rectangle){ 0, 50, (float)GetScreenWidth(), 125 }, 
                  TextFormat("%02d:%02d:%02d.%d", 
@@ -533,8 +535,6 @@ int main(int argc, char *argv[])
             transcribing = false;
         }
 
-        // read the time after every frame
-        if (timerStarted) read_time(&timer, &time, GetTime());
 
         zero_state(&padState);
         stopRecording = false;
